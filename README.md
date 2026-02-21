@@ -1,7 +1,11 @@
-### Contributors
 
-[Dusti Johnson](https://www.github.com/dustij)
-[Ujjwal Sitaula](https://github.com/ujjwalsitaula839-cloud)
-[Sapnish Sharma](https://github.com/Sapnish-S)
-[Ariel L](https://github.com/AriLee1)
-[Rajdeep Sah](https://github.com/rajdeepsah)
+  # Interactive Chat Platform
+
+  This is a code bundle for Interactive Chat Platform. The original project is available at https://www.figma.com/design/3U5uJvp9D1PVfEVG818dD2/Interactive-Chat-Platform.
+
+  ## Running the code
+
+  Run `npm i` to install the dependencies.
+
+  Run `npm run dev` to start the development server.
+  
