@@ -17,11 +17,11 @@ import {
 } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { useAiChat } from '@/hooks/useAiChat';
-import { useRouter } from 'next/navigation';
 import { useState, type FormEvent, type ReactElement } from 'react';
 
 const CHAT_MODES = ['Roast', 'Flirt'] as const;
 type ChatMode = (typeof CHAT_MODES)[number];
+type ChatEntry = { id: string; role: 'system' | 'user'; content: string };
 
 const MODE_BORDER_STYLES: Record<
   ChatMode,
@@ -75,28 +75,22 @@ const BUTTON_TRANSITION = {
 } as const;
 
 export default function ChatPage() {
-  const router = useRouter();
   const [chatMode, setChatMode] = useState<ChatMode>(CHAT_MODES[0]);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<ChatEntry[]>([]);
   const modeBorders = MODE_BORDER_STYLES[chatMode];
 
-  const exampleTexts: Array<{ role: 'system' | 'user'; text: string }> = [
-    { role: 'system', text: "You're suspiciously good at this app thing." },
-    { role: 'user', text: 'Give me your best roast in one sentence.' },
-    { role: 'system', text: 'That was savage. Hit me with another one.' },
-  ];
-  const exampleMessages: ReactElement[] = [];
-  for (let i = 0; i < exampleTexts.length; i += 1) {
-    const message = exampleTexts[i];
+  const renderedMessages: ReactElement[] = [];
+  for (let i = 0; i < messages.length; i += 1) {
+    const message = messages[i];
     const avatarImage =
       message.role === 'system' ? '/globe.svg' : '/window.svg';
 
-    exampleMessages.push(
+    renderedMessages.push(
       <ChatMessage
-        key={`example-message-${i}`}
+        key={message.id}
         role={message.role}
         avatarImage={avatarImage}
-        text={message.text}
+        text={message.content}
         bubbleClassName={modeBorders.messageBubble}
         bubbleTailClassName={modeBorders.messageTail}
         avatarClassName={modeBorders.messageAvatar}
@@ -106,27 +100,34 @@ export default function ChatPage() {
 
   const { input, isLoading, handleInputChange, handleSubmit, setInput } =
     useAiChat({
-      onFinish(prompt, completion) {
-        const systemMessage = {
+      onFinish(_prompt, completion) {
+        const systemMessage: ChatEntry = {
+          id: `system-${Date.now()}`,
           role: 'system',
           content: completion,
         };
 
         setMessages((current) => [...current, systemMessage]);
-        setInput('');
-
-        router.refresh();
       },
     });
 
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
-    const userMessage = {
+    e.preventDefault();
+
+    const trimmedInput = input.trim();
+    if (!trimmedInput) {
+      return;
+    }
+
+    const userMessage: ChatEntry = {
+      id: `user-${Date.now()}`,
       role: 'user',
-      content: input,
+      content: trimmedInput,
     };
 
     setMessages((current) => [...current, userMessage]);
-    handleSubmit(e);
+    setInput('');
+    void handleSubmit(undefined, trimmedInput);
   };
 
   return (
@@ -219,7 +220,13 @@ export default function ChatPage() {
             </div> */}
 
             <div className="relative z-10 flex h-full flex-col justify-end gap-3">
-              {exampleMessages}
+              {renderedMessages.length > 0 ? (
+                renderedMessages
+              ) : (
+                <div className="flex h-full items-center justify-center text-sm text-white/50">
+                  Start the chat by sending a message below.
+                </div>
+              )}
             </div>
           </motion.section>
 
