@@ -1,12 +1,13 @@
 import { ModelAdapter, Message } from '@/lib/types';
+import { getServerEnv } from '@/lib/server/env';
 
 export class ClaudeAdapter implements ModelAdapter {
   private apiKey: string;
   private model: string;
 
   constructor() {
-    this.apiKey = process.env.ANTHROPIC_API_KEY ?? '';
-    this.model = process.env.CLAUDE_MODEL ?? 'claude-opus-4-6';
+    this.apiKey = getServerEnv('ANTHROPIC_API_KEY');
+    this.model = getServerEnv('CLAUDE_MODEL', 'claude-opus-4-6');
   }
 
   async complete(systemPrompt: string, userMessage: string, history: Message[]): Promise<string> {

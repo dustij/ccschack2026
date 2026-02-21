@@ -1,12 +1,13 @@
 import { ModelAdapter, Message } from '@/lib/types';
+import { getServerEnv } from '@/lib/server/env';
 
 export class OpenAIAdapter implements ModelAdapter {
   private apiKey: string;
   private model: string;
 
   constructor() {
-    this.apiKey = process.env.OPENAI_API_KEY ?? '';
-    this.model = process.env.OPENAI_MODEL ?? 'gpt-4o-mini';
+    this.apiKey = getServerEnv('OPENAI_API_KEY');
+    this.model = getServerEnv('OPENAI_MODEL', 'gpt-4o-mini');
   }
 
   async complete(systemPrompt: string, userMessage: string, history: Message[]): Promise<string> {

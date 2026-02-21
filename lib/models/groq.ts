@@ -1,4 +1,5 @@
-import { ModelAdapter, Message } from '@/lib/types';
+import { Message, ModelAdapter } from '@/lib/types';
+import { getRequiredServerEnv, getServerEnv } from '@/lib/server/env';
 
 /**
  * Groq adapter — uses the OpenAI-compatible Groq API.
@@ -13,15 +14,15 @@ export class GroqAdapter implements ModelAdapter {
   private model: string;
 
   constructor(private keyEnvVar: string) {
-    this.model = process.env.GROQ_MODEL ?? 'llama-3.3-70b-versatile';
+    this.model = getServerEnv('GROQ_MODEL', 'llama-3.3-70b-versatile');
   }
 
-  async complete(systemPrompt: string, userMessage: string, history: Message[]): Promise<string> {
-    const apiKey = process.env[this.keyEnvVar] ?? '';
-
-    if (!apiKey) {
-      throw new Error(`Missing env var: ${this.keyEnvVar}`);
-    }
+  async complete(
+    systemPrompt: string,
+    userMessage: string,
+    history: Message[]
+  ): Promise<string> {
+    const apiKey = getRequiredServerEnv(this.keyEnvVar);
 
     const messages = [
       { role: 'system', content: systemPrompt },

@@ -1,3 +1,4 @@
+import 'server-only';
 import { ChatMode, Message, AgentResponse } from '@/lib/types';
 import { AGENTS_BY_MODE, getSystemPrompt } from '@/lib/prompts';
 import { getModel } from '@/lib/models/index';
