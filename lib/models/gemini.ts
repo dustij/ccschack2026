@@ -1,12 +1,13 @@
 import { ModelAdapter, Message } from '@/lib/types';
+import { getServerEnv } from '@/lib/server/env';
 
 export class GeminiAdapter implements ModelAdapter {
   private apiKey: string;
   private model: string;
 
   constructor() {
-    this.apiKey = process.env.GEMINI_API_KEY ?? '';
-    this.model = process.env.GEMINI_MODEL ?? 'gemini-2.0-flash';
+    this.apiKey = getServerEnv('GEMINI_API_KEY');
+    this.model = getServerEnv('GEMINI_MODEL', 'gemini-2.0-flash');
   }
 
   async complete(systemPrompt: string, userMessage: string, history: Message[]): Promise<string> {

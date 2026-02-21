@@ -1,4 +1,5 @@
 import { ModelAdapter, Message } from '@/lib/types';
+import { getServerEnv } from '@/lib/server/env';
 
 /**
  * Generic adapter for any OpenAI-compatible REST endpoint.
@@ -10,9 +11,9 @@ export class CustomAdapter implements ModelAdapter {
   private model: string;
 
   constructor() {
-    this.apiUrl = process.env.CUSTOM_API_URL ?? '';
-    this.apiKey = process.env.CUSTOM_API_KEY ?? '';
-    this.model = process.env.CUSTOM_MODEL ?? 'custom-model';
+    this.apiUrl = getServerEnv('CUSTOM_API_URL');
+    this.apiKey = getServerEnv('CUSTOM_API_KEY');
+    this.model = getServerEnv('CUSTOM_MODEL', 'custom-model');
   }
 
   async complete(systemPrompt: string, userMessage: string, history: Message[]): Promise<string> {

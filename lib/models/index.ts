@@ -1,3 +1,4 @@
+import 'server-only';
 import { ModelAdapter } from '@/lib/types';
 import { ClaudeAdapter } from './claude';
 import { OpenAIAdapter } from './openai';
