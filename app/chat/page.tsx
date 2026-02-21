@@ -17,9 +17,10 @@ import {
 } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { useAiChat } from '@/hooks/useAiChat';
+import type { AgentResponse } from '@/lib/types';
 import { useState, type FormEvent, type ReactElement } from 'react';
 
-const CHAT_MODES = ['Roast', 'Flirt'] as const;
+const CHAT_MODES = ['Roast', 'Flirt', 'Academic', 'Story'] as const;
 type ChatMode = (typeof CHAT_MODES)[number];
 type ChatEntry = { id: string; role: 'system' | 'user'; content: string };
 
@@ -51,6 +52,24 @@ const MODE_BORDER_STYLES: Record<
     modePopup: 'border-candy-blue/35',
     messageBubble: 'border-none',
     messageTail: 'border-candy-blue/45',
+    messageAvatar: 'border-none',
+  },
+  Academic: {
+    panel: 'border-candy-mint/45',
+    footer: 'border-candy-mint/45',
+    modeTrigger: 'border-candy-mint/45 hover:border-candy-mint/70',
+    modePopup: 'border-candy-mint/35',
+    messageBubble: 'border-none',
+    messageTail: 'border-candy-mint/45',
+    messageAvatar: 'border-none',
+  },
+  Story: {
+    panel: 'border-candy-purple/45',
+    footer: 'border-candy-purple/45',
+    modeTrigger: 'border-candy-purple/45 hover:border-candy-purple/70',
+    modePopup: 'border-candy-purple/35',
+    messageBubble: 'border-none',
+    messageTail: 'border-candy-purple/45',
     messageAvatar: 'border-none',
   },
 };
@@ -100,14 +119,14 @@ export default function ChatPage() {
 
   const { input, isLoading, handleInputChange, handleSubmit, setInput } =
     useAiChat({
-      onFinish(_prompt, completion) {
-        const systemMessage: ChatEntry = {
-          id: `system-${Date.now()}`,
+      mode: chatMode,
+      onFinish(_prompt, agents: AgentResponse[]) {
+        const agentMessages: ChatEntry[] = agents.map((a) => ({
+          id: `agent-${a.agentName}-${Date.now()}-${Math.random()}`,
           role: 'system',
-          content: completion,
-        };
-
-        setMessages((current) => [...current, systemMessage]);
+          content: `${a.agentName}: ${a.text}`,
+        }));
+        setMessages((current) => [...current, ...agentMessages]);
       },
     });
 
@@ -115,9 +134,7 @@ export default function ChatPage() {
     e.preventDefault();
 
     const trimmedInput = input.trim();
-    if (!trimmedInput) {
-      return;
-    }
+    if (!trimmedInput) return;
 
     const userMessage: ChatEntry = {
       id: `user-${Date.now()}`,
@@ -185,7 +202,7 @@ export default function ChatPage() {
                 <ComboboxValue placeholder="Mode" />
               </ComboboxTrigger>
               <ComboboxContent
-                className={`bg-candy-purple-dark/95 w-32 rounded-xl border p-1 text-white shadow-xl ${modeBorders.modePopup}`}
+                className={`bg-candy-purple-dark/95 w-36 rounded-xl border p-1 text-white shadow-xl ${modeBorders.modePopup}`}
               >
                 <ComboboxList>
                   {CHAT_MODES.map((mode) => (
@@ -215,9 +232,6 @@ export default function ChatPage() {
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 bg-linear-to-b from-white/5 via-transparent to-black/25"
             />
-            {/* <div className="relative flex h-full items-center justify-center rounded-2xl border border-white/10 bg-black/15 px-4 py-6 text-sm text-white/55">
-              Chat window
-            </div> */}
 
             <div className="relative z-10 flex h-full flex-col justify-end gap-3">
               {renderedMessages.length > 0 ? (

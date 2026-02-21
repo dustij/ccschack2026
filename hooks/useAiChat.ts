@@ -8,9 +8,11 @@ import {
   type FormEvent,
   type SetStateAction,
 } from 'react';
+import type { AgentResponse, Message } from '@/lib/types';
 
 export interface UseAiChatOptions {
-  onFinish?: (prompt: string, completion: string) => void | Promise<void>;
+  mode: string;
+  onFinish?: (prompt: string, agents: AgentResponse[]) => void | Promise<void>;
 }
 
 export interface UseAiChatResult {
@@ -26,13 +28,10 @@ export interface UseAiChatResult {
   setInput: Dispatch<SetStateAction<string>>;
 }
 
-function buildMockCompletion(prompt: string): string {
-  return `Mock AI reply: ${prompt}`;
-}
-
-export function useAiChat(options?: UseAiChatOptions): UseAiChatResult {
+export function useAiChat({ mode, onFinish }: UseAiChatOptions): UseAiChatResult {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [history, setHistory] = useState<Message[]>([]);
 
   const handleInputChange = useCallback(
     (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -46,21 +45,46 @@ export function useAiChat(options?: UseAiChatOptions): UseAiChatResult {
       event?.preventDefault();
 
       const prompt = (promptOverride ?? input).trim();
-      if (!prompt || isLoading) {
-        return;
-      }
+      if (!prompt || isLoading) return;
 
       setIsLoading(true);
 
       try {
-        await new Promise((resolve) => setTimeout(resolve, 650));
-        const completion = buildMockCompletion(prompt);
-        await options?.onFinish?.(prompt, completion);
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: prompt,
+            mode: mode.toLowerCase(),
+            history,
+          }),
+        });
+
+        if (!res.ok) {
+          console.error('Chat API error:', res.status);
+          return;
+        }
+
+        const data = await res.json();
+        const agents: AgentResponse[] = data.agents ?? [];
+
+        if (agents.length > 0) {
+          const userMsg: Message = { role: 'user', content: prompt };
+          const agentMsgs: Message[] = agents.map((a) => ({
+            role: 'assistant',
+            content: a.text,
+            agentName: a.agentName,
+          }));
+          setHistory((prev) => [...prev, userMsg, ...agentMsgs]);
+          await onFinish?.(prompt, agents);
+        }
+      } catch (err) {
+        console.error('Chat error:', err);
       } finally {
         setIsLoading(false);
       }
     },
-    [input, isLoading, options]
+    [input, isLoading, mode, history, onFinish]
   );
 
   return {
