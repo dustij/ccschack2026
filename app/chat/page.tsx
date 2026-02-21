@@ -23,7 +23,12 @@ import type { AgentResponse } from '@/lib/types';
 
 const CHAT_MODES = ['Roast', 'Flirt', 'Academic', 'Story'] as const;
 type ChatMode = (typeof CHAT_MODES)[number];
-type ChatEntry = { id: string; role: 'system' | 'user'; content: string; isTyping?: boolean };
+type ChatEntry = {
+  id: string;
+  role: 'system' | 'user';
+  content: string;
+  isTyping?: boolean;
+};
 
 const MODE_BORDER_STYLES: Record<
   ChatMode,
@@ -44,7 +49,7 @@ const MODE_BORDER_STYLES: Record<
     messageBubble: 'border-none',
     messageAvatar: 'border-none',
   },
-  Roast: {
+  Story: {
     panel: 'border-candy-blue/45',
     footer: 'border-candy-blue/45',
     modeTrigger: 'border-candy-blue/45 hover:border-candy-blue/70',
@@ -60,7 +65,7 @@ const MODE_BORDER_STYLES: Record<
     messageBubble: 'border-none',
     messageAvatar: 'border-none',
   },
-  Story: {
+  Roast: {
     panel: 'border-candy-purple/45',
     footer: 'border-candy-purple/45',
     modeTrigger: 'border-candy-purple/45 hover:border-candy-purple/70',
@@ -97,6 +102,7 @@ export default function ChatPage() {
 
   // Scroll anchor — we scroll here whenever a new bubble appears.
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const hasAutoScrolledRef = useRef(false);
 
   // Called by the typing queue when an agent finishes typing.
   const handleMessageComplete = useCallback((id: string, fullText: string) => {
@@ -107,7 +113,13 @@ export default function ChatPage() {
 
   // Scroll to bottom when a new bubble appears (new message or new typing entry).
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messages.length === 0 && typingMessages.length === 0) return;
+
+    messagesEndRef.current?.scrollIntoView({
+      behavior: hasAutoScrolledRef.current ? 'smooth' : 'auto',
+      block: 'end',
+    });
+    hasAutoScrolledRef.current = true;
   }, [messages.length, typingMessages.length]);
 
   const { input, isLoading, handleInputChange, handleSubmit, setInput } =
@@ -156,7 +168,7 @@ export default function ChatPage() {
   ];
 
   return (
-    <div className="to-candy-purple-dark relative isolate min-h-screen overflow-hidden bg-white bg-linear-60 dark:from-black">
+    <div className="to-candy-purple-dark relative isolate min-h-dvh overflow-hidden bg-white bg-linear-60 dark:from-black">
       <AmbientParticles />
       <div
         aria-hidden="true"
@@ -171,7 +183,7 @@ export default function ChatPage() {
         />
       </div>
 
-      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-6 sm:px-6 sm:py-8">
+      <div className="relative z-10 mx-auto flex min-h-dvh w-full max-w-5xl flex-col px-4 py-6 sm:px-6 sm:py-8">
         <header className="mb-4 flex items-center justify-between">
           <motion.div
             initial={{ opacity: 0, x: -90, rotate: -14, scale: 0.72 }}

@@ -17,11 +17,13 @@ interface QueueItem {
 const AGENT_START_DELAY_MS = 500;
 
 /** Per-character typing speed range (ms). Realistic human-like cadence. */
-const MIN_CHAR_DELAY_MS = 25;
-const MAX_CHAR_DELAY_MS = 45;
+const MIN_CHAR_DELAY_MS = 20;
+const MAX_CHAR_DELAY_MS = 35;
 
 function randomCharDelay(): number {
-  return MIN_CHAR_DELAY_MS + Math.random() * (MAX_CHAR_DELAY_MS - MIN_CHAR_DELAY_MS);
+  return (
+    MIN_CHAR_DELAY_MS + Math.random() * (MAX_CHAR_DELAY_MS - MIN_CHAR_DELAY_MS)
+  );
 }
 
 /**
@@ -37,7 +39,7 @@ function randomCharDelay(): number {
  *                           Use this to persist the message to your main list.
  */
 export function useTypingQueue(
-  onMessageComplete: (id: string, fullText: string) => void,
+  onMessageComplete: (id: string, fullText: string) => void
 ) {
   const [typingMessages, setTypingMessages] = useState<TypingMessage[]>([]);
 
@@ -84,8 +86,8 @@ export function useTypingQueue(
           prev.map((m) =>
             m.id === item.id
               ? { ...m, displayText: item.fullText.slice(0, index) }
-              : m,
-          ),
+              : m
+          )
         );
 
         setTimeout(() => tick(index + 1), randomCharDelay());
@@ -107,7 +109,7 @@ export function useTypingQueue(
         processNext();
       }
     },
-    [processNext],
+    [processNext]
   );
 
   return { typingMessages, enqueue };
