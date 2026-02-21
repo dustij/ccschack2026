@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { ArrowLeftIcon, ArrowUpIcon } from 'lucide-react';
 import Link from 'next/link';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import ChatMessage from '@/components/ChatMessage';
 import { AmbientParticles } from '@/components/ui/ambient-particles';
@@ -17,12 +18,17 @@ import {
 } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { useAiChat } from '@/hooks/useAiChat';
+import { useTypingQueue } from '@/hooks/useTypingQueue';
 import type { AgentResponse } from '@/lib/types';
-import { useState, type FormEvent, type ReactElement } from 'react';
 
 const CHAT_MODES = ['Roast', 'Flirt', 'Academic', 'Story'] as const;
 type ChatMode = (typeof CHAT_MODES)[number];
-type ChatEntry = { id: string; role: 'system' | 'user'; content: string };
+type ChatEntry = {
+  id: string;
+  role: 'system' | 'user';
+  content: string;
+  isTyping?: boolean;
+};
 
 const MODE_BORDER_STYLES: Record<
   ChatMode,
@@ -32,7 +38,6 @@ const MODE_BORDER_STYLES: Record<
     modeTrigger: string;
     modePopup: string;
     messageBubble: string;
-    messageTail: string;
     messageAvatar: string;
   }
 > = {
@@ -42,16 +47,14 @@ const MODE_BORDER_STYLES: Record<
     modeTrigger: 'border-candy-pink/45 hover:border-candy-pink/70',
     modePopup: 'border-candy-pink/35',
     messageBubble: 'border-none',
-    messageTail: 'border-candy-pink/45',
     messageAvatar: 'border-none',
   },
-  Roast: {
+  Story: {
     panel: 'border-candy-blue/45',
     footer: 'border-candy-blue/45',
     modeTrigger: 'border-candy-blue/45 hover:border-candy-blue/70',
     modePopup: 'border-candy-blue/35',
     messageBubble: 'border-none',
-    messageTail: 'border-candy-blue/45',
     messageAvatar: 'border-none',
   },
   Academic: {
@@ -60,16 +63,14 @@ const MODE_BORDER_STYLES: Record<
     modeTrigger: 'border-candy-mint/45 hover:border-candy-mint/70',
     modePopup: 'border-candy-mint/35',
     messageBubble: 'border-none',
-    messageTail: 'border-candy-mint/45',
     messageAvatar: 'border-none',
   },
-  Story: {
+  Roast: {
     panel: 'border-candy-purple/45',
     footer: 'border-candy-purple/45',
     modeTrigger: 'border-candy-purple/45 hover:border-candy-purple/70',
     modePopup: 'border-candy-purple/35',
     messageBubble: 'border-none',
-    messageTail: 'border-candy-purple/45',
     messageAvatar: 'border-none',
   },
 };
@@ -95,46 +96,54 @@ const BUTTON_TRANSITION = {
 
 export default function ChatPage() {
   const [chatMode, setChatMode] = useState<ChatMode>(CHAT_MODES[0]);
+  // Completed messages (user messages + fully-typed agent messages).
   const [messages, setMessages] = useState<ChatEntry[]>([]);
   const modeBorders = MODE_BORDER_STYLES[chatMode];
 
-  const renderedMessages: ReactElement[] = [];
-  for (let i = 0; i < messages.length; i += 1) {
-    const message = messages[i];
-    const avatarImage =
-      message.role === 'system' ? '/globe.svg' : '/window.svg';
+  // Scroll anchor — we scroll here whenever a new bubble appears.
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const hasAutoScrolledRef = useRef(false);
 
-    renderedMessages.push(
-      <ChatMessage
-        key={message.id}
-        role={message.role}
-        avatarImage={avatarImage}
-        text={message.content}
-        bubbleClassName={modeBorders.messageBubble}
-        bubbleTailClassName={modeBorders.messageTail}
-        avatarClassName={modeBorders.messageAvatar}
-      />
-    );
-  }
+  // Called by the typing queue when an agent finishes typing.
+  const handleMessageComplete = useCallback((id: string, fullText: string) => {
+    setMessages((prev) => [...prev, { id, role: 'system', content: fullText }]);
+  }, []);
+
+  const { typingMessages, enqueue } = useTypingQueue(handleMessageComplete);
+
+  // Scroll to bottom when a new bubble appears (new message or new typing entry).
+  useEffect(() => {
+    if (messages.length === 0 && typingMessages.length === 0) return;
+
+    messagesEndRef.current?.scrollIntoView({
+      behavior: hasAutoScrolledRef.current ? 'smooth' : 'auto',
+      block: 'end',
+    });
+    hasAutoScrolledRef.current = true;
+  }, [messages.length, typingMessages.length]);
 
   const { input, isLoading, handleInputChange, handleSubmit, setInput } =
     useAiChat({
       mode: chatMode,
       onFinish(_prompt, agents: AgentResponse[]) {
-        const agentMessages: ChatEntry[] = agents.map((a) => ({
+        // Hand agents to the typing queue — do NOT add them to `messages` directly.
+        const items = agents.map((a) => ({
           id: `agent-${a.agentName}-${Date.now()}-${Math.random()}`,
-          role: 'system',
-          content: `${a.agentName}: ${a.text}`,
+          fullText: `${a.agentName}: ${a.text}`,
         }));
-        setMessages((current) => [...current, ...agentMessages]);
+        enqueue(items);
       },
     });
 
-  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+  // True while the API is fetching OR while agents are still animating.
+  // Blocking submission during animation keeps message order correct.
+  const isBusy = isLoading || typingMessages.length > 0;
+
+  const onSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const trimmedInput = input.trim();
-    if (!trimmedInput) return;
+    if (!trimmedInput || isBusy) return;
 
     const userMessage: ChatEntry = {
       id: `user-${Date.now()}`,
@@ -147,8 +156,19 @@ export default function ChatPage() {
     void handleSubmit(undefined, trimmedInput);
   };
 
+  // Merge completed messages with any currently-animating messages for display.
+  const allDisplayMessages = [
+    ...messages,
+    ...typingMessages.map((m) => ({
+      id: m.id,
+      role: 'system' as const,
+      content: m.displayText,
+      isTyping: m.isTyping,
+    })),
+  ];
+
   return (
-    <div className="to-candy-purple-dark relative isolate min-h-screen overflow-hidden bg-white bg-linear-60 dark:from-black">
+    <div className="to-candy-purple-dark relative isolate min-h-dvh overflow-hidden bg-white bg-linear-60 dark:from-black">
       <AmbientParticles />
       <div
         aria-hidden="true"
@@ -163,7 +183,7 @@ export default function ChatPage() {
         />
       </div>
 
-      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-6 sm:px-6 sm:py-8">
+      <div className="relative z-10 mx-auto flex min-h-dvh w-full max-w-5xl flex-col px-4 py-6 sm:px-6 sm:py-8">
         <header className="mb-4 flex items-center justify-between">
           <motion.div
             initial={{ opacity: 0, x: -90, rotate: -14, scale: 0.72 }}
@@ -226,21 +246,40 @@ export default function ChatPage() {
             initial={{ opacity: 0, y: -140, rotate: -2.4, scale: 0.93 }}
             animate={{ opacity: 1, y: 0, rotate: 0, scale: 1 }}
             transition={PANEL_TRANSITION}
-            className={`bg-candy-purple-dark/55 relative flex-1 overflow-hidden rounded-3xl border p-4 shadow-2xl shadow-black/30 backdrop-blur-md ${modeBorders.panel}`}
+            className={`bg-candy-purple-dark/55 relative flex-1 overflow-hidden rounded-3xl border shadow-2xl shadow-black/30 backdrop-blur-md ${modeBorders.panel}`}
           >
+            {/* Gradient vignette — purely decorative */}
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-0 bg-linear-to-b from-white/5 via-transparent to-black/25"
+              className="pointer-events-none absolute inset-0 z-10 bg-linear-to-b from-white/5 via-transparent to-black/25"
             />
 
-            <div className="relative z-10 flex h-full flex-col justify-end gap-3">
-              {renderedMessages.length > 0 ? (
-                renderedMessages
-              ) : (
-                <div className="flex h-full items-center justify-center text-sm text-white/50">
-                  Start the chat by sending a message below.
-                </div>
-              )}
+            {/* Scrollable message list */}
+            <div className="absolute inset-0 overflow-y-auto">
+              <div className="flex min-h-full flex-col justify-end gap-3 p-4">
+                {allDisplayMessages.length > 0 ? (
+                  allDisplayMessages.map((message) => (
+                    <ChatMessage
+                      key={message.id}
+                      role={message.role}
+                      avatarImage={
+                        message.role === 'system' ? '/globe.svg' : '/window.svg'
+                      }
+                      text={message.content}
+                      isTyping={message.isTyping}
+                      bubbleClassName={modeBorders.messageBubble}
+                      avatarClassName={modeBorders.messageAvatar}
+                    />
+                  ))
+                ) : (
+                  <div className="flex h-full items-center justify-center text-sm text-white/50">
+                    Start the chat by sending a message below.
+                  </div>
+                )}
+
+                {/* Invisible anchor — scrolled into view when new bubbles appear */}
+                <div ref={messagesEndRef} aria-hidden="true" />
+              </div>
             </div>
           </motion.section>
 
@@ -253,7 +292,7 @@ export default function ChatPage() {
             {/* CHAT INPUT */}
             <form className="flex items-center gap-2" onSubmit={onSubmit}>
               <Input
-                disabled={isLoading}
+                disabled={isBusy}
                 value={input}
                 onChange={handleInputChange}
                 type="text"
@@ -263,7 +302,7 @@ export default function ChatPage() {
               <motion.div>
                 <Button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={isBusy}
                   size="icon-xs"
                   className="text-candy-purple-dark size-10 rounded-full bg-white/30 hover:bg-white/35"
                   aria-label="Send message"
