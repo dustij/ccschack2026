@@ -16,13 +16,12 @@ import {
   ComboboxValue,
 } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
-import { useAiChat } from '@/hooks/useAiChat';
-import type { AgentResponse } from '@/lib/types';
-import { useState, type FormEvent, type ReactElement } from 'react';
+import { useState, useRef, useEffect, type FormEvent, type ReactElement } from 'react';
+import { debateAction } from '@/app/actions/debate';
 
-const CHAT_MODES = ['Roast', 'Flirt', 'Academic', 'Story'] as const;
+const CHAT_MODES = ['roast', 'flirt', 'academic', 'story', 'debate'] as const;
 type ChatMode = (typeof CHAT_MODES)[number];
-type ChatEntry = { id: string; role: 'system' | 'user'; content: string };
+type ChatEntry = { id: string; role: 'system' | 'user'; content: string; name?: string; isTyping?: boolean };
 
 const MODE_BORDER_STYLES: Record<
   ChatMode,
@@ -36,7 +35,7 @@ const MODE_BORDER_STYLES: Record<
     messageAvatar: string;
   }
 > = {
-  Flirt: {
+  flirt: {
     panel: 'border-candy-pink/45',
     footer: 'border-candy-pink/45',
     modeTrigger: 'border-candy-pink/45 hover:border-candy-pink/70',
@@ -45,7 +44,7 @@ const MODE_BORDER_STYLES: Record<
     messageTail: 'border-candy-pink/45',
     messageAvatar: 'border-none',
   },
-  Roast: {
+  roast: {
     panel: 'border-candy-blue/45',
     footer: 'border-candy-blue/45',
     modeTrigger: 'border-candy-blue/45 hover:border-candy-blue/70',
@@ -54,7 +53,7 @@ const MODE_BORDER_STYLES: Record<
     messageTail: 'border-candy-blue/45',
     messageAvatar: 'border-none',
   },
-  Academic: {
+  academic: {
     panel: 'border-candy-mint/45',
     footer: 'border-candy-mint/45',
     modeTrigger: 'border-candy-mint/45 hover:border-candy-mint/70',
@@ -63,13 +62,22 @@ const MODE_BORDER_STYLES: Record<
     messageTail: 'border-candy-mint/45',
     messageAvatar: 'border-none',
   },
-  Story: {
+  story: {
     panel: 'border-candy-purple/45',
     footer: 'border-candy-purple/45',
     modeTrigger: 'border-candy-purple/45 hover:border-candy-purple/70',
     modePopup: 'border-candy-purple/35',
     messageBubble: 'border-none',
     messageTail: 'border-candy-purple/45',
+    messageAvatar: 'border-none',
+  },
+  debate: {
+    panel: 'border-orange-500/45',
+    footer: 'border-orange-500/45',
+    modeTrigger: 'border-orange-500/45 hover:border-orange-500/70',
+    modePopup: 'border-orange-500/35',
+    messageBubble: 'border-none',
+    messageTail: 'border-orange-500/45',
     messageAvatar: 'border-none',
   },
 };
@@ -98,11 +106,94 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<ChatEntry[]>([]);
   const modeBorders = MODE_BORDER_STYLES[chatMode];
 
+  // Debate state
+  const [isDebating, setIsDebating] = useState(false);
+  const [turnCount, setTurnCount] = useState(0);
+  const [debateStatus, setDebateStatus] = useState<'idle' | 'fetching' | 'typing' | 'waiting'>('idle');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, debateStatus]);
+
+  useEffect(() => {
+    let timerId: NodeJS.Timeout;
+
+    const runNextTurn = async () => {
+      if (!isDebating || turnCount >= 15) {
+        setIsDebating(false);
+        setDebateStatus('idle');
+        return;
+      }
+
+      setDebateStatus('fetching');
+
+      try {
+        const originalPrompt = messages.find(m => m.role === 'user')?.content || '';
+        const historyForDebate = messages.map(m => ({
+          role: m.role,
+          content: m.content.replace(/^.*?: /, ''), // Strip prepended names for API
+          name: m.name
+        }));
+
+        const result = await debateAction(originalPrompt, historyForDebate, turnCount, chatMode);
+
+        setMessages(prev => [
+          ...prev,
+          {
+            id: `debate-${turnCount}-${Date.now()}`,
+            role: 'system',
+            name: result.modelName,
+            content: result.content,
+            isTyping: true
+          }
+        ]);
+
+        setTurnCount(prev => prev + 1);
+        setDebateStatus('typing');
+
+      } catch (err: any) {
+        console.error('Debate loop crashed', err);
+        setIsDebating(false);
+        setDebateStatus('idle');
+      }
+    };
+
+    if (isDebating && debateStatus === 'idle') {
+      setDebateStatus('waiting');
+    } else if (isDebating && debateStatus === 'waiting') {
+      const waitTime = Math.floor(Math.random() * 5000) + 5000;
+      timerId = setTimeout(() => {
+        runNextTurn();
+      }, waitTime);
+    }
+
+    return () => clearTimeout(timerId);
+  }, [isDebating, debateStatus, turnCount, chatMode, messages]);
+
+  const getNextAgentName = () => {
+    const nextAgentIndex = turnCount % 3;
+    return nextAgentIndex === 0 ? 'GPT-5 nano' : nextAgentIndex === 1 ? 'Gemma 2' : 'LLaMA 3.3';
+  };
+
+  let activeStatusMessage = null;
+  if (isDebating && debateStatus === 'waiting') {
+    activeStatusMessage = `${getNextAgentName()} is thinking...`;
+  }
+
   const renderedMessages: ReactElement[] = [];
   for (let i = 0; i < messages.length; i += 1) {
     const message = messages[i];
-    const avatarImage =
-      message.role === 'system' ? '/globe.svg' : '/window.svg';
+
+    let avatarImage = '/window.svg';
+    if (message.role === 'system') {
+      const nameLower = message.name?.toLowerCase() || '';
+      if (nameLower.includes('gpt-5')) avatarImage = '/openai.svg';
+      else if (nameLower.includes('gemma')) avatarImage = '/gemini.svg';
+      else if (nameLower.includes('llama')) avatarImage = '/meta.svg';
+      else avatarImage = '/globe.svg';
+    }
 
     renderedMessages.push(
       <ChatMessage
@@ -110,6 +201,14 @@ export default function ChatPage() {
         role={message.role}
         avatarImage={avatarImage}
         text={message.content}
+        authorName={message.name}
+        animate={message.isTyping}
+        onAnimationComplete={() => {
+          if (message.isTyping) {
+            setMessages(prev => prev.map(m => m.id === message.id ? { ...m, isTyping: false } : m));
+            if (isDebating) setDebateStatus('idle'); // Triggers the next runNextTurn loop instantly
+          }
+        }}
         bubbleClassName={modeBorders.messageBubble}
         bubbleTailClassName={modeBorders.messageTail}
         avatarClassName={modeBorders.messageAvatar}
@@ -117,25 +216,16 @@ export default function ChatPage() {
     );
   }
 
-  const { input, isLoading, handleInputChange, handleSubmit, setInput } =
-    useAiChat({
-      mode: chatMode,
-      onFinish(_prompt, agents: AgentResponse[]) {
-        const agentMessages: ChatEntry[] = agents.map((a) => ({
-          id: `agent-${a.agentName}-${Date.now()}-${Math.random()}`,
-          role: 'system',
-          content: `${a.agentName}: ${a.text}`,
-        }));
-        setMessages((current) => [...current, ...agentMessages]);
-      },
-    });
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false); // Can be used to disable button during user submission processing
 
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const trimmedInput = input.trim();
-    if (!trimmedInput) return;
+    if (!trimmedInput || isDebating || debateStatus !== 'idle') return;
 
+    // Put user message on screen immediately
     const userMessage: ChatEntry = {
       id: `user-${Date.now()}`,
       role: 'user',
@@ -144,7 +234,11 @@ export default function ChatPage() {
 
     setMessages((current) => [...current, userMessage]);
     setInput('');
-    void handleSubmit(undefined, trimmedInput);
+
+    // Kick off chain-reaction loop
+    setTurnCount(0);
+    setIsDebating(true);
+    setDebateStatus('idle'); // Starting from idle immediately triggers the first AI in the loop
   };
 
   return (
@@ -235,7 +329,18 @@ export default function ChatPage() {
 
             <div className="relative z-10 flex h-full flex-col justify-end gap-3">
               {renderedMessages.length > 0 ? (
-                renderedMessages
+                <>
+                  {renderedMessages}
+                  {activeStatusMessage && (
+                    <div className="flex items-center gap-2 p-3 text-white/70 text-sm italic animate-pulse">
+                      <div className="w-2 h-2 rounded-full bg-white/70 animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-2 h-2 rounded-full bg-white/70 animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-2 h-2 rounded-full bg-white/70 animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      <span className="ml-2">{activeStatusMessage}</span>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </>
               ) : (
                 <div className="flex h-full items-center justify-center text-sm text-white/50">
                   Start the chat by sending a message below.
@@ -252,10 +357,24 @@ export default function ChatPage() {
           >
             {/* CHAT INPUT */}
             <form className="flex items-center gap-2" onSubmit={onSubmit}>
+              {isDebating && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => {
+                    setIsDebating(false);
+                    setDebateStatus('idle');
+                    setTurnCount(0);
+                  }}
+                  className="bg-red-500/80 hover:bg-red-600/90 text-white rounded-2xl h-11 px-4 font-bold shadow-lg"
+                >
+                  Stop the Fight
+                </Button>
+              )}
               <Input
                 disabled={isLoading}
                 value={input}
-                onChange={handleInputChange}
+                onChange={(e) => setInput(e.target.value)}
                 type="text"
                 placeholder="Type your message..."
                 className="h-11 rounded-2xl border-0 bg-transparent text-white shadow-none placeholder:text-white/45 focus-visible:ring-0 dark:bg-transparent"
