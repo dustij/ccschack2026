@@ -3,9 +3,9 @@
 import { motion, useScroll, useTransform } from 'motion/react';
 import { Heart, Zap, Flame, Sparkles } from 'lucide-react';
 import { useRef } from 'react';
-const chatgptImg = 'https://ui-avatars.com/api/?name=ChatGPT&background=10a37f&color=fff&size=200';
-const geminiImg = 'https://ui-avatars.com/api/?name=Gemini&background=4285F4&color=fff&size=200';
-const ollamaImg = 'https://ui-avatars.com/api/?name=Ollama&background=F97316&color=fff&size=200';
+import chatgptImg from '../../assets/f465c1af3de1e61f29495c91575913755c2b3846.png';
+import geminiImg from '../../assets/044f20097f26c9ff486df6b0a9d2022e7289da17.png';
+import ollamaImg from '../../assets/0d5e1c995cdc198f4371739604963e7f0be8f8e8.png';
 
 const personas = [
   {
