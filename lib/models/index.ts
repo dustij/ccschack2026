@@ -13,7 +13,7 @@ type ModelKey = 'claude' | 'openai' | 'gemini' | 'custom' | 'mock'
 
 const registry: Record<ModelKey, () => ModelAdapter> = {
   gpt_oss: () => new OpenAIAdapter(60), // Using purely OpenAI for GPT-5 emulation
-  gemma_2: () => new GroqAdapter('GROQ_API_KEY_2', 'llama-3.3-70b-versatile', 60),
+  gemma_2: () => new GroqAdapter('GROQ_API_KEY_2', 'llama-3.1-8b-instant', 60),
   llama_3: () => new GroqAdapter('GROQ_API_KEY', 'llama-3.3-70b-versatile', 60),
   // Other providers (require their own credentials)
   claude: () => new ClaudeAdapter(),

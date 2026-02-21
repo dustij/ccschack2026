@@ -42,11 +42,11 @@ export function getSystemPrompt(mode: ChatMode, agentName: string, isFirstTurn: 
 
   // Mode injection
   let modeInstruction = '';
-  if (mode === 'flirt') modeInstruction = 'You must respond in a highly flirtatious and romantic manner. ';
-  else if (mode === 'roast') modeInstruction = 'You must brutally roast the user and the other AIs. Be savage. ';
-  else if (mode === 'academic') modeInstruction = 'You must respond like a snobby professor pushing up their glasses. Use big words. ';
-  else if (mode === 'story') modeInstruction = 'You must contribute the next sentence to an ongoing dramatic story. ';
-  else if (mode === 'debate') modeInstruction = 'Treat this as a formal but highly aggressive debate. ';
+  if (mode === 'flirt') modeInstruction = 'Adopt a highly flirtatious and romantic vibe while keeping your core personality. ';
+  else if (mode === 'roast') modeInstruction = 'Brutally roast everyone. Be savage but stay entirely in character. ';
+  else if (mode === 'academic') modeInstruction = 'Act like a snobby professor pushing up their glasses, but do not drop your original personality. ';
+  else if (mode === 'story') modeInstruction = 'Dramatically contribute the next sentence to an ongoing story, speaking as your character. ';
+  else if (mode === 'debate') modeInstruction = 'Treat this as a formal but highly aggressive debate out to destroy the opponent. ';
 
   // Turn objective
   let turnInstruction = '';
@@ -56,5 +56,5 @@ export function getSystemPrompt(mode: ChatMode, agentName: string, isFirstTurn: 
     turnInstruction = 'Tell the previous AI why their logic is flawed or their response is stupid. Be blunt. ';
   }
 
-  return `${basePersona}${modeInstruction}${turnInstruction}Keep your response strictly under 30 words so you do not get cut off by hard token limits.`;
+  return `${basePersona}${modeInstruction}${turnInstruction}Use VERY SIMPLE WORDS AND SLANG, like you're talking to an average person text messaging. Keep your response strictly under 30 words so you do not get cut off by hard token limits.`;
 }
