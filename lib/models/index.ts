@@ -7,15 +7,15 @@ import { CustomAdapter } from './custom';
 import { MockAdapter } from './mock';
 import { GroqAdapter } from './groq';
 
+import { OpenRouterAdapter } from './openrouter';
+
 type ModelKey = 'claude' | 'openai' | 'gemini' | 'custom' | 'mock'
-  | 'groq1' | 'groq2' | 'groq3' | 'groq4';
+  | 'gpt_oss' | 'gemma_2' | 'llama_3';
 
 const registry: Record<ModelKey, () => ModelAdapter> = {
-  // Groq — 4 separate keys to distribute load and avoid rate limits during demo
-  groq1: () => new GroqAdapter('GROQ_API_KEY_1'),
-  groq2: () => new GroqAdapter('GROQ_API_KEY_2'),
-  groq3: () => new GroqAdapter('GROQ_API_KEY_3'),
-  groq4: () => new GroqAdapter('GROQ_API_KEY_4'),
+  gpt_oss: () => new OpenAIAdapter(60), // Using purely OpenAI for GPT-5 emulation
+  gemma_2: () => new GroqAdapter('GROQ_API_KEY_2', 'llama-3.3-70b-versatile', 60),
+  llama_3: () => new GroqAdapter('GROQ_API_KEY', 'llama-3.3-70b-versatile', 60),
   // Other providers (require their own credentials)
   claude: () => new ClaudeAdapter(),
   openai: () => new OpenAIAdapter(),
