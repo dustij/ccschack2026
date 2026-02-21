@@ -188,47 +188,33 @@
   pointer-events: none;
 }
 
+@keyframes particle-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(0.95);
+  }
+  50% {
+    transform: translate3d(0, -3.25rem, 0) scale(1.05);
+  }
+}
+
 @keyframes particle-drift {
   0%,
   100% {
-    transform: translate3d(0, 0, 0);
-  }
-  33% {
-    transform: translate3d(0.45rem, -0.35rem, 0);
-  }
-  66% {
-    transform: translate3d(-0.3rem, 0.45rem, 0);
-  }
-}
-
-@keyframes particle-twinkle {
-  0%,
-  100% {
-    opacity: 0.14;
+    margin-left: -0.75rem;
   }
   50% {
-    opacity: 0.95;
+    margin-left: 0.75rem;
   }
 }
 
-@keyframes particle-flicker {
+@keyframes particle-pulse {
   0%,
-  35%,
-  70%,
   100% {
-    filter: blur(0);
-    box-shadow:
-      0 0 0.15rem var(--particle-glow),
-      0 0 0.45rem var(--particle-glow);
+    opacity: 0.45;
   }
-  18%,
-  52%,
-  84% {
-    filter: blur(0.75px);
-    box-shadow:
-      0 0 0.35rem var(--particle-glow),
-      0 0 0.8rem var(--particle-glow),
-      0 0 1.25rem var(--particle-glow);
+  50% {
+    opacity: 0.8;
   }
 }
 
@@ -243,15 +229,10 @@
 .ambient-particle {
   position: absolute;
   border-radius: 9999px;
-  background: radial-gradient(
-    circle at 45% 45%,
-    var(--particle-color) 0%,
-    var(--particle-color) 58%,
-    transparent 100%
-  );
-  mix-blend-mode: normal;
-  will-change: transform, opacity, filter, box-shadow;
-  animation-name: particle-drift, particle-twinkle, particle-flicker;
+  mix-blend-mode: screen;
+  filter: blur(0.5px);
+  will-change: transform, opacity, margin-left;
+  animation-name: particle-float, particle-drift, particle-pulse;
   animation-timing-function: ease-in-out, ease-in-out, ease-in-out;
   animation-iteration-count: infinite;
 }

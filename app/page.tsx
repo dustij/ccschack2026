@@ -1,5 +1,19 @@
+'use client';
+
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { AmbientParticles } from '@/components/ui/ambient-particles';
+
+const CONTENT_TRANSITION = {
+  duration: 0.52,
+  ease: 'easeOut',
+} as const;
+
+const CTA_TRANSITION = {
+  duration: 0.42,
+  delay: 0.36,
+  ease: 'easeOut',
+} as const;
 
 export default function Home() {
   return (
@@ -18,8 +32,18 @@ export default function Home() {
           // className="aspect-1108/632 w-277 bg-linear-to-r from-[#80caff] to-[#4f46e5] opacity-20"
         />
       </div>
-      <div className="relative z-10 mx-auto max-w-7xl px-6 pt-10 pb-24 sm:pb-32 lg:flex lg:px-8 lg:py-40">
-        <div className="mx-auto max-w-2xl shrink-0 lg:mx-0 lg:pt-8">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.28, ease: 'easeOut' }}
+        className="relative z-10 mx-auto max-w-7xl px-6 pt-10 pb-24 sm:pb-32 lg:flex lg:px-8 lg:py-40"
+      >
+        <motion.div
+          initial={{ opacity: 0, y: -28 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={CONTENT_TRANSITION}
+          className="mx-auto max-w-2xl shrink-0 lg:mx-0 lg:pt-8"
+        >
           {/* <img
             alt="Your Company"
             src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=purple&shade=600"
@@ -55,23 +79,36 @@ export default function Home() {
             loops, or abandon logic entirely when “flirt mode” is enabled.
           </p>
           <div className="mt-10 flex items-center gap-x-6">
-            <div className="get-started-border relative flex p-px">
+            <motion.div
+              initial={{ opacity: 0, x: -24 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={CTA_TRANSITION}
+              className="get-started-border relative flex p-px"
+            >
               <Link
                 href="/chat"
                 className="dark:bg-candy-purple-dark/85 dark:hover:bg-candy-purple-dark/80 relative rounded-md bg-purple-600 px-3.5 py-2.5 text-lg font-semibold text-white shadow-xs hover:bg-purple-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 dark:focus-visible:outline-purple-500"
               >
                 Get started
               </Link>
-            </div>
-            <a
+            </motion.div>
+            <motion.a
+              initial={{ opacity: 0, x: 24 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ ...CTA_TRANSITION, delay: 0.42 }}
               href="#"
               className="text-base/6 font-semibold text-gray-900 dark:text-white"
             >
               Learn more <span aria-hidden="true">→</span>
-            </a>
+            </motion.a>
           </div>
-        </div>
-        <div className="mx-auto mt-16 flex max-w-2xl sm:mt-24 lg:mt-0 lg:mr-0 lg:ml-10 lg:max-w-none lg:flex-none xl:ml-32">
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 28 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={CONTENT_TRANSITION}
+          className="mx-auto mt-16 flex max-w-2xl sm:mt-24 lg:mt-0 lg:mr-0 lg:ml-10 lg:max-w-none lg:flex-none xl:ml-32"
+        >
           <div className="max-w-3xl flex-none sm:max-w-5xl lg:max-w-none">
             {/* <div className="relative ml-32 h-full w-full">
               <iframe
@@ -95,8 +132,8 @@ export default function Home() {
               className="w-304 rounded-md bg-white/5 shadow-2xl ring-1 ring-white/10 not-dark:hidden"
             /> */}
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }
