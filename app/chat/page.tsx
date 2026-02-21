@@ -1,9 +1,10 @@
 'use client';
 
-import { ArrowLeftIcon, ArrowUpIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { ArrowLeftIcon, ArrowUpIcon } from 'lucide-react';
 import Link from 'next/link';
 
+import ChatMessage from '@/components/ChatMessage';
 import { AmbientParticles } from '@/components/ui/ambient-particles';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,8 +16,48 @@ import {
   ComboboxValue,
 } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
+import { useAiChat } from '@/hooks/useAiChat';
+import { useRouter } from 'next/navigation';
+import { useState, type FormEvent, type ReactElement } from 'react';
 
 const CHAT_MODES = ['Roast', 'Flirt'] as const;
+type ChatMode = (typeof CHAT_MODES)[number];
+
+const MODE_BORDER_STYLES: Record<
+  ChatMode,
+  {
+    panel: string;
+    footer: string;
+    modeTrigger: string;
+    modePopup: string;
+    messageBubble: string;
+    messageTail: string;
+    messageAvatar: string;
+  }
+> = {
+  Flirt: {
+    panel: 'border-candy-pink/45',
+    footer: 'border-candy-pink/45',
+    modeTrigger: 'border-candy-pink/45 hover:border-candy-pink/70',
+    modePopup: 'border-candy-pink/35',
+    messageBubble: 'border-none',
+    messageTail: 'border-candy-pink/45',
+    messageAvatar: 'border-none',
+  },
+  Roast: {
+    panel: 'border-candy-blue/45',
+    footer: 'border-candy-blue/45',
+    modeTrigger: 'border-candy-blue/45 hover:border-candy-blue/70',
+    modePopup: 'border-candy-blue/35',
+    messageBubble: 'border-none',
+    messageTail: 'border-candy-blue/45',
+    messageAvatar: 'border-none',
+  },
+};
+
+function isChatMode(mode: string | null): mode is ChatMode {
+  return mode !== null && CHAT_MODES.includes(mode as ChatMode);
+}
 
 const PANEL_TRANSITION = {
   type: 'spring',
@@ -34,6 +75,60 @@ const BUTTON_TRANSITION = {
 } as const;
 
 export default function ChatPage() {
+  const router = useRouter();
+  const [chatMode, setChatMode] = useState<ChatMode>(CHAT_MODES[0]);
+  const [messages, setMessages] = useState<any[]>([]);
+  const modeBorders = MODE_BORDER_STYLES[chatMode];
+
+  const exampleTexts: Array<{ role: 'system' | 'user'; text: string }> = [
+    { role: 'system', text: "You're suspiciously good at this app thing." },
+    { role: 'user', text: 'Give me your best roast in one sentence.' },
+    { role: 'system', text: 'That was savage. Hit me with another one.' },
+  ];
+  const exampleMessages: ReactElement[] = [];
+  for (let i = 0; i < exampleTexts.length; i += 1) {
+    const message = exampleTexts[i];
+    const avatarImage =
+      message.role === 'system' ? '/globe.svg' : '/window.svg';
+
+    exampleMessages.push(
+      <ChatMessage
+        key={`example-message-${i}`}
+        role={message.role}
+        avatarImage={avatarImage}
+        text={message.text}
+        bubbleClassName={modeBorders.messageBubble}
+        bubbleTailClassName={modeBorders.messageTail}
+        avatarClassName={modeBorders.messageAvatar}
+      />
+    );
+  }
+
+  const { input, isLoading, handleInputChange, handleSubmit, setInput } =
+    useAiChat({
+      onFinish(prompt, completion) {
+        const systemMessage = {
+          role: 'system',
+          content: completion,
+        };
+
+        setMessages((current) => [...current, systemMessage]);
+        setInput('');
+
+        router.refresh();
+      },
+    });
+
+  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+    const userMessage = {
+      role: 'user',
+      content: input,
+    };
+
+    setMessages((current) => [...current, userMessage]);
+    handleSubmit(e);
+  };
+
   return (
     <div className="to-candy-purple-dark relative isolate min-h-screen overflow-hidden bg-white bg-linear-60 dark:from-black">
       <AmbientParticles />
@@ -74,11 +169,23 @@ export default function ChatPage() {
             animate={{ opacity: 1, x: 0, rotate: 0, scale: 1 }}
             transition={BUTTON_TRANSITION}
           >
-            <Combobox defaultValue={CHAT_MODES[0]} aria-label="Mode">
-              <ComboboxTrigger className="bg-candy-purple-dark/65 hover:border-candy-pink/55 flex h-10 min-w-28 items-center justify-between gap-2 rounded-full border border-white/12 px-4 text-sm font-medium text-white shadow-xs backdrop-blur-md transition-colors">
+            <Combobox
+              value={chatMode}
+              onValueChange={(nextMode) => {
+                if (isChatMode(nextMode)) {
+                  setChatMode(nextMode);
+                }
+              }}
+              aria-label="Mode"
+            >
+              <ComboboxTrigger
+                className={`bg-candy-purple-dark/65 flex h-10 min-w-28 items-center justify-between gap-2 rounded-full border px-4 text-sm font-medium text-white shadow-xs backdrop-blur-md transition-colors ${modeBorders.modeTrigger}`}
+              >
                 <ComboboxValue placeholder="Mode" />
               </ComboboxTrigger>
-              <ComboboxContent className="bg-candy-purple-dark/95 w-32 rounded-xl border border-white/12 p-1 text-white shadow-xl">
+              <ComboboxContent
+                className={`bg-candy-purple-dark/95 w-32 rounded-xl border p-1 text-white shadow-xl ${modeBorders.modePopup}`}
+              >
                 <ComboboxList>
                   {CHAT_MODES.map((mode) => (
                     <ComboboxItem
@@ -96,18 +203,23 @@ export default function ChatPage() {
         </header>
 
         <main className="flex flex-1 flex-col gap-4">
+          {/* CHAT MESSAGES */}
           <motion.section
             initial={{ opacity: 0, y: -140, rotate: -2.4, scale: 0.93 }}
             animate={{ opacity: 1, y: 0, rotate: 0, scale: 1 }}
             transition={PANEL_TRANSITION}
-            className="bg-candy-purple-dark/55 relative flex-1 overflow-hidden rounded-3xl border border-white/10 p-4 shadow-2xl shadow-black/30 backdrop-blur-md"
+            className={`bg-candy-purple-dark/55 relative flex-1 overflow-hidden rounded-3xl border p-4 shadow-2xl shadow-black/30 backdrop-blur-md ${modeBorders.panel}`}
           >
             <div
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 bg-linear-to-b from-white/5 via-transparent to-black/25"
             />
-            <div className="relative flex h-full items-center justify-center rounded-2xl border border-white/10 bg-black/15 px-4 py-6 text-sm text-white/55">
+            {/* <div className="relative flex h-full items-center justify-center rounded-2xl border border-white/10 bg-black/15 px-4 py-6 text-sm text-white/55">
               Chat window
+            </div> */}
+
+            <div className="relative z-10 flex h-full flex-col justify-end gap-3">
+              {exampleMessages}
             </div>
           </motion.section>
 
@@ -115,17 +227,22 @@ export default function ChatPage() {
             initial={{ opacity: 0, y: 130, rotate: 2.2, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, rotate: 0, scale: 1 }}
             transition={PANEL_TRANSITION}
-            className="bg-candy-purple-dark/72 rounded-3xl border border-white/10 p-2 shadow-xl shadow-black/25 backdrop-blur-md"
+            className={`bg-candy-purple-dark/72 rounded-3xl border p-2 shadow-xl shadow-black/25 backdrop-blur-md ${modeBorders.footer}`}
           >
-            <div className="flex items-center gap-2">
+            {/* CHAT INPUT */}
+            <form className="flex items-center gap-2" onSubmit={onSubmit}>
               <Input
+                disabled={isLoading}
+                value={input}
+                onChange={handleInputChange}
                 type="text"
                 placeholder="Type your message..."
                 className="h-11 rounded-2xl border-0 bg-transparent text-white shadow-none placeholder:text-white/45 focus-visible:ring-0 dark:bg-transparent"
               />
               <motion.div>
                 <Button
-                  type="button"
+                  type="submit"
+                  disabled={isLoading}
                   size="icon-xs"
                   className="text-candy-purple-dark size-10 rounded-full bg-white/30 hover:bg-white/35"
                   aria-label="Send message"
@@ -133,7 +250,7 @@ export default function ChatPage() {
                   <ArrowUpIcon className="size-5" />
                 </Button>
               </motion.div>
-            </div>
+            </form>
           </motion.footer>
         </main>
       </div>
