@@ -7,8 +7,9 @@ import ollamaImg from '@/public/assets/ollama.png';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { Flame, Sparkles, Zap, type LucideIcon } from 'lucide-react';
 import Image, { type StaticImageData } from 'next/image';
-import Link from 'next/link';
+import NextLink from 'next/link';
 import { useRef } from 'react';
+import { Link as ScrollLink } from 'react-scroll';
 
 const CONTENT_TRANSITION = {
   duration: 0.52,
@@ -179,6 +180,7 @@ function PersonaCard({
 
 export default function Home() {
   const meetAisRef = useRef<HTMLElement | null>(null);
+  const currentYear = new Date().getFullYear();
   const { scrollYProgress } = useScroll({
     target: meetAisRef,
     offset: ['start end', 'end start'],
@@ -263,22 +265,28 @@ export default function Home() {
                 transition={CTA_TRANSITION}
                 className="get-started-border relative flex p-px"
               >
-                <Link
+                <NextLink
                   href="/chat"
                   className="dark:bg-candy-purple-dark/85 dark:hover:bg-candy-purple-dark/80 relative rounded-md bg-purple-600 px-3.5 py-2.5 text-lg font-semibold text-white shadow-xs hover:bg-purple-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 dark:focus-visible:outline-purple-500"
                 >
                   Get started
-                </Link>
+                </NextLink>
               </motion.div>
-              <motion.a
+              <motion.div
                 initial={{ opacity: 0, x: 24 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ ...CTA_TRANSITION, delay: 0.42 }}
-                href="#"
-                className="text-base/6 font-semibold text-gray-900 dark:text-white"
               >
-                Learn more <span aria-hidden="true">→</span>
-              </motion.a>
+                <ScrollLink
+                  to="about-project"
+                  href="#about-project"
+                  smooth
+                  duration={550}
+                  className="cursor-pointer text-base/6 font-semibold text-gray-900 dark:text-white"
+                >
+                  Learn more <span aria-hidden="true">→</span>
+                </ScrollLink>
+              </motion.div>
             </div>
           </motion.div>
           {/* <motion.div
@@ -319,7 +327,7 @@ export default function Home() {
         <section
           ref={meetAisRef}
           id="meet-the-ais"
-          className="relative mx-auto max-w-7xl px-6 pb-28 lg:px-8"
+          className="relative mx-auto max-w-7xl px-6 pb-0 lg:px-8"
         >
           <div className="relative overflow-visible rounded-[2.75rem] px-4 py-14 sm:overflow-hidden sm:px-8 sm:py-16 lg:py-24">
             <motion.div
@@ -362,7 +370,7 @@ export default function Home() {
             </div>
 
             <div
-              className="relative mt-24 hidden min-h-208 w-full lg:block"
+              className="relative mt-24 hidden min-h-140 w-full lg:block"
               style={{ perspective: '1200px' }}
             >
               {AI_PERSONAS.map((persona, index) => (
@@ -394,6 +402,70 @@ export default function Home() {
             </div>
           </div>
         </section>
+        {/* ABOUT THE PROJECT */}
+        <section
+          id="about-project"
+          className="relative mx-auto min-h-screen max-w-7xl px-6 pt-16 lg:px-8"
+        >
+          <motion.div
+            className="rounded-[2.5rem] border-4 border-white/90 bg-white/85 p-8 shadow-[0_30px_70px_-18px_rgba(20,16,45,0.35)] backdrop-blur-sm sm:p-12"
+            initial={{ opacity: 0, y: 28 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.24 }}
+            transition={{ duration: 0.7, ease: 'easeOut' }}
+          >
+            <h2 className="font-bangers text-candy-purple-dark text-5xl tracking-wide sm:text-6xl">
+              About the project
+            </h2>
+            <p className="mt-5 max-w-3xl text-base font-medium text-slate-700 sm:text-lg">
+              In a world increasingly shaped by artificial intelligence, model
+              capabilities are advancing at an astonishing pace. So naturally,
+              we asked: if one AI is powerful… wouldn’t more be better?
+            </p>
+            <p className="mt-4 max-w-3xl text-base font-medium text-slate-700 sm:text-lg">
+              Inspired by a viral clip of two AI models endlessly persuading
+              each other to “keep the conversation chill,” we wondered what
+              would happen if multiple agents responded to the same prompt
+              simultaneously.
+            </p>
+            <p className="mt-4 max-w-3xl text-base font-medium text-slate-700 sm:text-lg">
+              This project explores what happens when a swarm of AI models
+              interacts in real time — not just with the user, but with each
+              other. Instead of a single polished response, you witness debate,
+              derailment, ego clashes, flirt mode toggles, feedback loops, and
+              unexpected alliances.
+            </p>
+          </motion.div>
+          <motion.div
+            className="mt-20 pb-12 text-center"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+          >
+            <p className="text-xl font-semibold tracking-wide text-white/90 sm:text-2xl">
+              Thank you for checking out our project.
+            </p>
+            <p className="mt-3 text-sm font-medium text-white/70 sm:text-base">
+              We appreciate your time and hope you had fun exploring the chaos.
+            </p>
+            <p className="mt-6 text-sm font-medium text-white/70 sm:text-base">
+              Created by:
+            </p>
+            <ul className="mt-3 text-sm font-medium text-white/70 sm:text-base">
+              <li>Dusti Johnson</li>
+              <li>Sapnish Sharma</li>
+              <li>Rajdeep Sah</li>
+              <li>Ariel L</li>
+              <li>Ujjwal Sitaula</li>
+            </ul>
+          </motion.div>
+        </section>
+        <footer className="mx-auto max-w-7xl px-6 pb-10 lg:px-8">
+          <div className="rounded-2xl border border-white/20 bg-black/20 px-4 py-4 text-center text-xs font-medium tracking-wide text-white/75 backdrop-blur-sm sm:text-sm">
+            &copy; {currentYear} AI Personas Project. All rights reserved.
+          </div>
+        </footer>
       </div>
     </div>
   );
