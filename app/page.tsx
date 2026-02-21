@@ -1,9 +1,13 @@
+import Link from 'next/link';
+import { AmbientParticles } from '@/components/ui/ambient-particles';
+
 export default function Home() {
   return (
     <div className="to-candy-purple-dark relative isolate min-h-screen overflow-hidden bg-white bg-linear-60 dark:from-black">
+      <AmbientParticles />
       <div
         aria-hidden="true"
-        className="absolute top-10 left-[calc(50%-4rem)] -z-10 transform-gpu blur-3xl sm:left-[calc(50%-18rem)] lg:top-[calc(50%-30rem)] lg:left-48 xl:left-[calc(50%-24rem)]"
+        className="absolute top-10 left-[calc(50%-4rem)] z-0 transform-gpu blur-3xl sm:left-[calc(50%-18rem)] lg:top-[calc(50%-30rem)] lg:left-48 xl:left-[calc(50%-24rem)]"
       >
         <div
           style={{
@@ -14,7 +18,7 @@ export default function Home() {
           // className="aspect-1108/632 w-277 bg-linear-to-r from-[#80caff] to-[#4f46e5] opacity-20"
         />
       </div>
-      <div className="mx-auto max-w-7xl px-6 pt-10 pb-24 sm:pb-32 lg:flex lg:px-8 lg:py-40">
+      <div className="relative z-10 mx-auto max-w-7xl px-6 pt-10 pb-24 sm:pb-32 lg:flex lg:px-8 lg:py-40">
         <div className="mx-auto max-w-2xl shrink-0 lg:mx-0 lg:pt-8">
           {/* <img
             alt="Your Company"
@@ -52,12 +56,12 @@ export default function Home() {
           </p>
           <div className="mt-10 flex items-center gap-x-6">
             <div className="get-started-border relative flex p-px">
-              <a
-                href="#"
+              <Link
+                href="/chat"
                 className="dark:bg-candy-purple-dark/85 dark:hover:bg-candy-purple-dark/80 relative rounded-md bg-purple-600 px-3.5 py-2.5 text-lg font-semibold text-white shadow-xs hover:bg-purple-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 dark:focus-visible:outline-purple-500"
               >
                 Get started
-              </a>
+              </Link>
             </div>
             <a
               href="#"
@@ -67,9 +71,16 @@ export default function Home() {
             </a>
           </div>
         </div>
-        {/* <div className="mx-auto mt-16 flex max-w-2xl sm:mt-24 lg:mt-0 lg:mr-0 lg:ml-10 lg:max-w-none lg:flex-none xl:ml-32">
+        <div className="mx-auto mt-16 flex max-w-2xl sm:mt-24 lg:mt-0 lg:mr-0 lg:ml-10 lg:max-w-none lg:flex-none xl:ml-32">
           <div className="max-w-3xl flex-none sm:max-w-5xl lg:max-w-none">
-            <img
+            {/* <div className="relative ml-32 h-full w-full">
+              <iframe
+                src="https://my.spline.design/genkubgreetingrobot-3AGOK06E2VWQMgtsn90pbrsr/"
+                className="h-full w-full rounded-xl"
+              />
+            </div> */}
+
+            {/* <img
               alt="App screenshot"
               src="https://tailwindcss.com/plus-assets/img/component-images/project-app-screenshot.png"
               width={2432}
@@ -82,9 +93,9 @@ export default function Home() {
               width={2432}
               height={1442}
               className="w-304 rounded-md bg-white/5 shadow-2xl ring-1 ring-white/10 not-dark:hidden"
-            />
+            /> */}
           </div>
-        </div> */}
+        </div>
       </div>
     </div>
   );

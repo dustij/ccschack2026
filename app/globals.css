@@ -187,3 +187,71 @@
   filter: blur(3.5rem);
   pointer-events: none;
 }
+
+@keyframes particle-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  33% {
+    transform: translate3d(0.45rem, -0.35rem, 0);
+  }
+  66% {
+    transform: translate3d(-0.3rem, 0.45rem, 0);
+  }
+}
+
+@keyframes particle-twinkle {
+  0%,
+  100% {
+    opacity: 0.14;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
+@keyframes particle-flicker {
+  0%,
+  35%,
+  70%,
+  100% {
+    filter: blur(0);
+    box-shadow:
+      0 0 0.15rem var(--particle-glow),
+      0 0 0.45rem var(--particle-glow);
+  }
+  18%,
+  52%,
+  84% {
+    filter: blur(0.75px);
+    box-shadow:
+      0 0 0.35rem var(--particle-glow),
+      0 0 0.8rem var(--particle-glow),
+      0 0 1.25rem var(--particle-glow);
+  }
+}
+
+.ambient-particles {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ambient-particle {
+  position: absolute;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle at 45% 45%,
+    var(--particle-color) 0%,
+    var(--particle-color) 58%,
+    transparent 100%
+  );
+  mix-blend-mode: normal;
+  will-change: transform, opacity, filter, box-shadow;
+  animation-name: particle-drift, particle-twinkle, particle-flicker;
+  animation-timing-function: ease-in-out, ease-in-out, ease-in-out;
+  animation-iteration-count: infinite;
+}
