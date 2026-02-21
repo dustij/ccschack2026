@@ -1,5 +1,5 @@
+import ChatPage from '@/components/ChatPage';
+
 export default function Home() {
-  return (
-    <div className='flex min-h-screen w-full items-center justify-center font-sans'></div>
-  );
+  return <ChatPage />;
 }
