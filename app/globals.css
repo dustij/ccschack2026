@@ -229,8 +229,12 @@
 .ambient-particle {
   position: absolute;
   border-radius: 9999px;
-  mix-blend-mode: screen;
-  filter: blur(0.5px);
+  background: var(--particle-color, #fff);
+  box-shadow:
+    0 0 0.4rem var(--particle-glow, rgba(255, 255, 255, 0.8)),
+    0 0 1.15rem var(--particle-glow, rgba(255, 255, 255, 0.65));
+  mix-blend-mode: normal;
+  filter: blur(0.35px);
   will-change: transform, opacity, margin-left;
   animation-name: particle-float, particle-drift, particle-pulse;
   animation-timing-function: ease-in-out, ease-in-out, ease-in-out;

@@ -111,7 +111,7 @@ function PersonaCard({
         transformStyle: 'preserve-3d',
       }}
     >
-      <div className="pointer-events-none absolute -top-24 left-1/2 z-20 h-48 w-48 -translate-x-1/2 drop-shadow-2xl xl:-top-28 xl:h-56 xl:w-56">
+      <div className="pointer-events-none absolute -top-20 left-1/2 z-20 h-44 w-44 -translate-x-1/2 drop-shadow-2xl sm:-top-24 sm:h-48 sm:w-48 xl:-top-28 xl:h-56 xl:w-56">
         <motion.div
           className="relative h-full w-full"
           animate={{ y: [0, -10, 0] }}
@@ -321,7 +321,7 @@ export default function Home() {
           id="meet-the-ais"
           className="relative mx-auto max-w-7xl px-6 pb-28 lg:px-8"
         >
-          <div className="relative overflow-hidden rounded-[2.75rem] px-4 py-14 sm:px-8 sm:py-16 lg:py-24">
+          <div className="relative overflow-visible rounded-[2.75rem] px-4 py-14 sm:overflow-hidden sm:px-8 sm:py-16 lg:py-24">
             <motion.div
               className="relative text-center"
               initial={{ opacity: 0, y: 30 }}
@@ -330,10 +330,10 @@ export default function Home() {
               transition={{ duration: 0.8, ease: 'easeOut' }}
             >
               <h2
-                className="font-bangers mb-5 tracking-wide text-transparent"
-                style={{ fontSize: 'clamp(3rem, 7vw, 5.75rem)' }}
+                className="font-bangers mb-5 px-2 leading-[1.08] tracking-wide text-transparent sm:px-0 sm:leading-[1.02]"
+                style={{ fontSize: 'clamp(2.25rem, 11vw, 5.75rem)' }}
               >
-                <span className="bg-linear-to-r from-pink-500 via-purple-500 to-yellow-500 bg-clip-text">
+                <span className="inline-block bg-linear-to-r from-pink-500 via-purple-500 to-yellow-500 bg-clip-text pr-[0.08em]">
                   Meet Our AI Personas
                 </span>
               </h2>
@@ -342,7 +342,7 @@ export default function Home() {
               </p>
             </motion.div>
 
-            <div className="relative mt-16 flex flex-col gap-20 sm:gap-16 lg:hidden">
+            <div className="relative mt-28 flex flex-col gap-20 sm:mt-20 sm:gap-16 lg:hidden">
               {AI_PERSONAS.map((persona, index) => (
                 <motion.div
                   key={persona.id}
@@ -362,7 +362,7 @@ export default function Home() {
             </div>
 
             <div
-              className="relative mt-24 hidden min-h-[52rem] w-full lg:block"
+              className="relative mt-24 hidden min-h-208 w-full lg:block"
               style={{ perspective: '1200px' }}
             >
               {AI_PERSONAS.map((persona, index) => (
