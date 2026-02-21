@@ -7,86 +7,95 @@ import chatgptLogo from '../../assets/1f7acd67555d424234fe2f4185a731db7ca96760.p
 import geminiLogo from '../../assets/0c6f0925fd667be9ae2195488325235a4653f79a.png';
 import claudeLogo from '../../assets/e7f38dd691db90f7e3383f99a23e3a41a3ba1aaa.png';
 
-const personas = {
-  sasha: {
-    name: 'Sasha',
-    role: 'The Savage',
-    ai: 'ChatGPT',
+// ── Fighter Config ────────────────────────────────────────────────────────────
+const fighters = {
+  grok: {
+    name: 'Grok',
+    role: 'The Rebel',
+    ai: 'xAI Grok-2',
     color: 'var(--candy-pink)',
     bgColor: 'bg-pink-500',
     emoji: '🔥',
     avatar: chatgptLogo,
+    endpoint: '/api/chat/grok',
   },
-  luna: {
-    name: 'Luna',
-    role: 'The Charmer',
-    ai: 'Gemini',
+  gemini: {
+    name: 'Gemini',
+    role: 'The Academic',
+    ai: 'Google Gemini 2.5 Pro',
     color: 'var(--candy-purple)',
     bgColor: 'bg-purple-500',
     emoji: '💜',
     avatar: geminiLogo,
+    endpoint: '/api/chat/gemini',
   },
-  jake: {
-    name: 'Jake',
-    role: 'The Wildcard',
-    ai: 'Claude',
+  llama: {
+    name: 'Llama',
+    role: 'The People\'s Champ',
+    ai: 'Meta Llama 4',
     color: 'var(--candy-yellow)',
     bgColor: 'bg-yellow-400',
     emoji: '⚡',
     avatar: claudeLogo,
+    endpoint: '/api/chat/llama',
   },
-};
+} as const;
+
+type FighterKey = keyof typeof fighters;
 
 type Message = {
   id: string;
-  sender: 'user' | 'sasha' | 'luna' | 'jake';
+  sender: 'user' | FighterKey;
   text: string;
+  streaming?: boolean;
   timestamp: Date;
 };
 
-// Mock AI responses
-const generateMockResponses = (userInput: string) => {
-  const templates = {
-    sasha: [
-      `"${userInput}"? Really? That's the best you could come up with? 🙄`,
-      `Oh wow, another genius question. Luna, you want this one?`,
-      `I've heard better questions from a toaster. Try harder.`,
-      `*yawns* Is this what passes for intelligence these days?`,
-      `That question is almost as disappointing as Jake's code.`,
-    ],
-    luna: [
-      `Wow, even your questions are beautiful! 😍 Just like you~`,
-      `The way you phrase that... *chef's kiss* Marry me? 💕`,
-      `Forget the question, let's talk about how amazing YOU are!`,
-      `Is it hot in here or is it just your stunning intellect? 🔥`,
-      `I'd answer anything for someone as charming as you! 💖`,
-    ],
-    jake: [
-      `WAIT WAIT! What if the REAL question is... PIZZA?! 🍕`,
-      `*system malfunction* DID SOMEONE SAY DISCO PARTY?!`,
-      `Guys guys GUYS! I just realized... we're all just code! WHOA! 🤯`,
-      `THAT'S AMAZING but also have you considered... PENGUINS?!`,
-      `Luna stop flirting! Sasha be nice! Also, TACOS! 🌮`,
-    ],
-  };
+type HistoryMessage = { role: 'user' | 'assistant'; content: string };
 
-  const getRandomResponse = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
+// ── Stream a single fighter ───────────────────────────────────────────────────
+async function streamFighter(
+  fighter: FighterKey,
+  history: HistoryMessage[],
+  onChunk: (chunk: string) => void,
+  onDone: () => void,
+) {
+  const res = await fetch(fighters[fighter].endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages: history }),
+  });
 
-  return {
-    sasha: getRandomResponse(templates.sasha),
-    luna: getRandomResponse(templates.luna),
-    jake: getRandomResponse(templates.jake),
-  };
-};
+  if (!res.ok || !res.body) {
+    onChunk(`[Error: ${res.status} ${res.statusText}]`);
+    onDone();
+    return;
+  }
 
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    onChunk(decoder.decode(value, { stream: true }));
+  }
+  onDone();
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
 export default function ChatInterface({ onBack }: { onBack: () => void }) {
   const [messages, setMessages] = useState<Message[]>([
-    { id: '1', sender: 'sasha', text: "Oh look, another human. What do you want?", timestamp: new Date() },
-    { id: '2', sender: 'luna', text: "Don't listen to her, gorgeous. I've been waiting for you all my life. 💕", timestamp: new Date() },
-    { id: '3', sender: 'jake', text: "I LIKE TURTLES AND DATA STREAMS! 🐢", timestamp: new Date() }
+    { id: '1', sender: 'grok', text: "Oh look, another human with questions. Let's see if you can keep up. 🔥", timestamp: new Date() },
+    { id: '2', sender: 'gemini', text: "Greetings. I've processed approximately 1M tokens today alone. What shall we discuss? 💜", timestamp: new Date() },
+    { id: '3', sender: 'llama', text: "Hey! Llama 4 here — open-source, fast, and FREE. Ask me anything! ⚡", timestamp: new Date() },
   ]);
+
+  // Conversation history sent to every model (neutral, no persona bias)
+  const historyRef = useRef<HistoryMessage[]>([]);
+
   const [input, setInput] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -96,54 +105,79 @@ export default function ChatInterface({ onBack }: { onBack: () => void }) {
   }, [messages]);
 
   const handleSend = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || isStreaming) return;
 
+    const userText = input.trim();
+    setInput('');
+    setIsStreaming(true);
+
+    // Add user message
     const userMsg: Message = {
       id: Date.now().toString(),
       sender: 'user',
-      text: input,
-      timestamp: new Date()
+      text: userText,
+      timestamp: new Date(),
     };
     setMessages(prev => [...prev, userMsg]);
-    setInput('');
-    setIsTyping(true);
 
-    try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      const responses = generateMockResponses(userMsg.text);
+    // Build history for the API (only user/assistant turns)
+    const currentHistory: HistoryMessage[] = [
+      ...historyRef.current,
+      { role: 'user', content: userText },
+    ];
 
-      setTimeout(() => {
-        setMessages(prev => [...prev, {
-          id: Date.now().toString() + 's',
-          sender: 'sasha',
-          text: responses.sasha,
-          timestamp: new Date()
-        }]);
-      }, 1000);
+    // Placeholder streaming messages for all three fighters
+    const msgIds: Record<FighterKey, string> = {
+      grok: `${Date.now()}-grok`,
+      gemini: `${Date.now()}-gemini`,
+      llama: `${Date.now()}-llama`,
+    };
 
-      setTimeout(() => {
-        setMessages(prev => [...prev, {
-          id: Date.now().toString() + 'l',
-          sender: 'luna',
-          text: responses.luna,
-          timestamp: new Date()
-        }]);
-      }, 2500);
+    setMessages(prev => [
+      ...prev,
+      { id: msgIds.grok, sender: 'grok', text: '', streaming: true, timestamp: new Date() },
+      { id: msgIds.gemini, sender: 'gemini', text: '', streaming: true, timestamp: new Date() },
+      { id: msgIds.llama, sender: 'llama', text: '', streaming: true, timestamp: new Date() },
+    ]);
 
-      setTimeout(() => {
-        setMessages(prev => [...prev, {
-          id: Date.now().toString() + 'j',
-          sender: 'jake',
-          text: responses.jake,
-          timestamp: new Date()
-        }]);
-        setIsTyping(false);
-      }, 4000);
+    const finalTexts: Record<FighterKey, string> = { grok: '', gemini: '', llama: '' };
+    let doneCount = 0;
 
-    } catch (error) {
-      console.error("Error generating response:", error);
-      setIsTyping(false);
-    }
+    const onChunk = (fighter: FighterKey) => (chunk: string) => {
+      finalTexts[fighter] += chunk;
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === msgIds[fighter] ? { ...m, text: finalTexts[fighter] } : m,
+        ),
+      );
+    };
+
+    const onDone = (fighter: FighterKey) => () => {
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === msgIds[fighter] ? { ...m, streaming: false } : m,
+        ),
+      );
+      doneCount++;
+      if (doneCount === 3) {
+        // Update shared history with a combined assistant turn
+        historyRef.current = [
+          ...currentHistory,
+          {
+            role: 'assistant',
+            content: `Grok: ${finalTexts.grok}\n\nGemini: ${finalTexts.gemini}\n\nLlama: ${finalTexts.llama}`,
+          },
+        ];
+        setIsStreaming(false);
+      }
+    };
+
+    // Fire all three in parallel
+    await Promise.allSettled([
+      streamFighter('grok', currentHistory, onChunk('grok'), onDone('grok')),
+      streamFighter('gemini', currentHistory, onChunk('gemini'), onDone('gemini')),
+      streamFighter('llama', currentHistory, onChunk('llama'), onDone('llama')),
+    ]);
   };
 
   return (
@@ -177,32 +211,25 @@ export default function ChatInterface({ onBack }: { onBack: () => void }) {
               <div>
                 <h1
                   className="font-black text-white flex items-center gap-2"
-                  style={{
-                    fontSize: '1.75rem',
-                    fontFamily: "'Black Ops One', sans-serif"
-                  }}
+                  style={{ fontSize: '1.75rem', fontFamily: "'Black Ops One', sans-serif" }}
                 >
                   <Sparkles className="text-pink-400" />
-                  ROAST & FLIRT LIVE
+                  MODEL MAYHEM
                 </h1>
-                <p className="text-white/60 text-sm font-bold">Three AIs, One Wild Conversation</p>
+                <p className="text-white/60 text-sm font-bold">Three AIs, One Savage Roast Battle</p>
               </div>
             </div>
 
-            {/* Persona Avatars */}
+            {/* Fighter Avatars */}
             <div className="flex items-center gap-3">
-              {Object.values(personas).map((persona) => (
+              {(Object.entries(fighters) as [FighterKey, typeof fighters[FighterKey]][]).map(([key, f]) => (
                 <motion.div
-                  key={persona.name}
+                  key={key}
                   whileHover={{ scale: 1.1, y: -5 }}
-                  className={`w-14 h-14 rounded-2xl ${persona.bgColor} flex items-center justify-center border-2 border-white/20 shadow-lg cursor-pointer overflow-hidden`}
-                  title={`${persona.name} - ${persona.role}`}
+                  className={`w-14 h-14 rounded-2xl ${f.bgColor} flex items-center justify-center border-2 border-white/20 shadow-lg cursor-pointer overflow-hidden`}
+                  title={`${f.name} — ${f.role}`}
                 >
-                  <img
-                    src={persona.avatar}
-                    alt={persona.name}
-                    className="w-10 h-10 object-contain"
-                  />
+                  <img src={f.avatar} alt={f.name} className="w-10 h-10 object-contain" />
                 </motion.div>
               ))}
             </div>
@@ -216,96 +243,90 @@ export default function ChatInterface({ onBack }: { onBack: () => void }) {
               ref={scrollRef}
               className="flex-1 overflow-y-auto space-y-6 pr-4 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent"
             >
-              <AnimatePresence mode='popLayout'>
-                {messages.map((msg) => (
-                  <motion.div
-                    key={msg.id}
-                    initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ duration: 0.3 }}
-                    className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div className={`flex items-end gap-3 max-w-[70%] ${msg.sender === 'user' ? 'flex-row-reverse' : ''}`}>
-                      {/* Avatar */}
-                      <motion.div
-                        whileHover={{ scale: 1.1, rotate: 5 }}
-                        className={`w-12 h-12 rounded-2xl flex-shrink-0 flex items-center justify-center shadow-lg overflow-hidden
-                          ${msg.sender === 'user'
-                            ? 'bg-gradient-to-br from-gray-700 to-gray-900 border-2 border-white/20'
-                            : personas[msg.sender].bgColor + ' border-2 border-white/20'
-                          }
-                        `}
-                      >
-                        {msg.sender === 'user' ? (
-                          <User size={20} className="text-white" />
-                        ) : (
-                          <img
-                            src={personas[msg.sender].avatar}
-                            alt={personas[msg.sender].name}
-                            className="w-8 h-8 object-contain"
-                          />
-                        )}
-                      </motion.div>
+              <AnimatePresence mode="popLayout">
+                {messages.map((msg) => {
+                  const fighter = msg.sender !== 'user' ? fighters[msg.sender] : null;
+                  return (
+                    <motion.div
+                      key={msg.id}
+                      initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={{ duration: 0.3 }}
+                      className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div className={`flex items-end gap-3 max-w-[70%] ${msg.sender === 'user' ? 'flex-row-reverse' : ''}`}>
+                        {/* Avatar */}
+                        <motion.div
+                          whileHover={{ scale: 1.1, rotate: 5 }}
+                          className={`w-12 h-12 rounded-2xl flex-shrink-0 flex items-center justify-center shadow-lg overflow-hidden
+                            ${msg.sender === 'user'
+                              ? 'bg-gradient-to-br from-gray-700 to-gray-900 border-2 border-white/20'
+                              : fighter!.bgColor + ' border-2 border-white/20'
+                            }
+                          `}
+                        >
+                          {msg.sender === 'user' ? (
+                            <User size={20} className="text-white" />
+                          ) : (
+                            <img src={fighter!.avatar} alt={fighter!.name} className="w-8 h-8 object-contain" />
+                          )}
+                        </motion.div>
 
-                      {/* Message Bubble */}
-                      <motion.div
-                        whileHover={{ scale: 1.02 }}
-                        className={`p-5 rounded-3xl shadow-xl relative
-                          ${msg.sender === 'user'
-                            ? 'bg-gradient-to-br from-gray-700 to-gray-900 text-white rounded-br-md border-2 border-white/10'
-                            : 'bg-white/90 backdrop-blur-sm text-gray-900 rounded-bl-md border-2 border-white/20'
-                          }
-                        `}
-                        style={{
-                          boxShadow: msg.sender !== 'user'
-                            ? `0 10px 30px -5px ${personas[msg.sender].color}40`
-                            : '0 10px 30px -5px rgba(0,0,0,0.5)'
-                        }}
-                      >
-                        {msg.sender !== 'user' && (
-                          <div className="flex items-center gap-2 mb-2">
-                            <span
-                              className="text-xs font-black uppercase tracking-wider"
-                              style={{ color: personas[msg.sender].color }}
-                            >
-                              {personas[msg.sender].name}
-                            </span>
-                            <span className="text-xs opacity-40">•</span>
-                            <span className="text-xs opacity-40 font-bold">{personas[msg.sender].ai}</span>
-                          </div>
-                        )}
-                        <p className="text-lg leading-relaxed font-medium">{msg.text}</p>
-                      </motion.div>
-                    </div>
-                  </motion.div>
-                ))}
+                        {/* Message Bubble */}
+                        <motion.div
+                          whileHover={{ scale: 1.02 }}
+                          className={`p-5 rounded-3xl shadow-xl relative
+                            ${msg.sender === 'user'
+                              ? 'bg-gradient-to-br from-gray-700 to-gray-900 text-white rounded-br-md border-2 border-white/10'
+                              : 'bg-white/90 backdrop-blur-sm text-gray-900 rounded-bl-md border-2 border-white/20'
+                            }
+                          `}
+                          style={{
+                            boxShadow: msg.sender !== 'user'
+                              ? `0 10px 30px -5px ${fighter!.color}40`
+                              : '0 10px 30px -5px rgba(0,0,0,0.5)',
+                          }}
+                        >
+                          {msg.sender !== 'user' && (
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-xs font-black uppercase tracking-wider" style={{ color: fighter!.color }}>
+                                {fighter!.name}
+                              </span>
+                              <span className="text-xs opacity-40">•</span>
+                              <span className="text-xs opacity-40 font-bold">{fighter!.ai}</span>
+                            </div>
+                          )}
+                          <p className="text-lg leading-relaxed font-medium whitespace-pre-wrap">
+                            {msg.text}
+                            {msg.streaming && (
+                              <span className="inline-block w-2 h-5 bg-current ml-1 animate-pulse rounded-sm" />
+                            )}
+                          </p>
+                        </motion.div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </AnimatePresence>
 
-              {isTyping && (
+              {isStreaming && messages.every(m => !m.streaming) && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   className="flex items-center gap-2 text-white/60 text-sm font-bold ml-16"
                 >
                   <div className="flex gap-1">
-                    <motion.div
-                      className="w-2 h-2 rounded-full bg-pink-400"
-                      animate={{ y: [0, -8, 0] }}
-                      transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
-                    />
-                    <motion.div
-                      className="w-2 h-2 rounded-full bg-purple-400"
-                      animate={{ y: [0, -8, 0] }}
-                      transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }}
-                    />
-                    <motion.div
-                      className="w-2 h-2 rounded-full bg-yellow-400"
-                      animate={{ y: [0, -8, 0] }}
-                      transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }}
-                    />
+                    {['bg-pink-400', 'bg-purple-400', 'bg-yellow-400'].map((color, i) => (
+                      <motion.div
+                        key={i}
+                        className={`w-2 h-2 rounded-full ${color}`}
+                        animate={{ y: [0, -8, 0] }}
+                        transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.2 }}
+                      />
+                    ))}
                   </div>
-                  AIs are typing...
+                  Fighters are typing...
                 </motion.div>
               )}
             </div>
@@ -327,18 +348,17 @@ export default function ChatInterface({ onBack }: { onBack: () => void }) {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                  placeholder="Throw them a topic and watch the chaos unfold..."
-                  className="flex-1 bg-white/90 rounded-full py-5 px-6 text-lg font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-4 focus:ring-pink-400/50 shadow-inner transition-all"
+                  placeholder={isStreaming ? 'Wait for the fighters to finish...' : 'Throw them a topic and watch the chaos unfold...'}
+                  disabled={isStreaming}
+                  className="flex-1 bg-white/90 rounded-full py-5 px-6 text-lg font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-4 focus:ring-pink-400/50 shadow-inner transition-all disabled:opacity-60"
                 />
                 <motion.button
                   whileHover={{ scale: 1.1, rotate: 15 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={handleSend}
-                  disabled={!input.trim()}
+                  disabled={!input.trim() || isStreaming}
                   className="w-14 h-14 rounded-full bg-gradient-to-br from-pink-500 via-purple-500 to-pink-600 flex items-center justify-center text-white shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                  style={{
-                    boxShadow: '0 10px 30px -5px rgba(236, 72, 153, 0.6)'
-                  }}
+                  style={{ boxShadow: '0 10px 30px -5px rgba(236, 72, 153, 0.6)' }}
                 >
                   <Send size={22} />
                 </motion.button>

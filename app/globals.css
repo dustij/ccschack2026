@@ -1,8 +1,19 @@
 @import "tailwindcss";
 
+/* ── Base Colors ─────────────────────────────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0a0a0a;
+  --foreground: #ededed;
+
+  /* Candy-Coated Color Palette */
+  --candy-pink: #ff6b9d;
+  --candy-pink-light: #ffb3d9;
+  --candy-purple: #c084fc;
+  --candy-purple-light: #e9d5ff;
+  --candy-yellow: #ffd60a;
+  --candy-yellow-light: #fff3c4;
+  --candy-blue: #60a5fa;
+  --candy-mint: #86efac;
 }
 
 @theme inline {
@@ -10,13 +21,16 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Candy Colors exposed as Tailwind utilities */
+  --color-candy-pink: var(--candy-pink);
+  --color-candy-pink-light: var(--candy-pink-light);
+  --color-candy-purple: var(--candy-purple);
+  --color-candy-purple-light: var(--candy-purple-light);
+  --color-candy-yellow: var(--candy-yellow);
+  --color-candy-yellow-light: var(--candy-yellow-light);
+  --color-candy-blue: var(--candy-blue);
+  --color-candy-mint: var(--candy-mint);
 }
 
 body {
