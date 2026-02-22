@@ -125,7 +125,7 @@ export default function ChatPage() {
           messages.find((m) => m.role === 'user')?.content || '';
         const historyForDebate = messages.map((m) => ({
           role: m.role,
-          content: m.content.replace(/^.*?: /, ''), // Strip prepended names for API
+          content: m.content,
           name: m.name,
         }));
 
@@ -159,15 +159,16 @@ export default function ChatPage() {
     if (isDebating && debateStatus === 'idle') {
       setDebateStatus('waiting');
     } else if (isDebating && debateStatus === 'waiting') {
-      const waitTime =
-        Math.floor(Math.random() * (MAX_WAIT_TIME_MS - MIN_WAIT_TIME_MS + 1)) +
-        MIN_WAIT_TIME_MS;
-      timerId = setTimeout(() => {
-        runNextTurn();
-      }, waitTime);
+      // const waitTime =
+      //   Math.floor(Math.random() * (MAX_WAIT_TIME_MS - MIN_WAIT_TIME_MS + 1)) +
+      //   MIN_WAIT_TIME_MS;
+      // timerId = setTimeout(() => {
+      //   runNextTurn();
+      // }, waitTime);
+      runNextTurn();
     }
 
-    return () => clearTimeout(timerId);
+    // return () => clearTimeout(timerId);
   }, [isDebating, debateStatus, turnCount, chatMode, messages]);
 
   const getNextAgentName = () => {
@@ -188,20 +189,10 @@ export default function ChatPage() {
   for (let i = 0; i < messages.length; i += 1) {
     const message = messages[i];
 
-    let avatarImage = '/window.svg';
-    if (message.role === 'system') {
-      const nameLower = message.name?.toLowerCase() || '';
-      if (nameLower.includes('gpt-5')) avatarImage = '/openai.svg';
-      else if (nameLower.includes('gemma')) avatarImage = '/gemini.svg';
-      else if (nameLower.includes('llama')) avatarImage = '/meta.svg';
-      else avatarImage = '/globe.svg';
-    }
-
     renderedMessages.push(
       <ChatMessage
         key={message.id}
         role={message.role}
-        avatarImage={avatarImage}
         text={message.content}
         authorName={message.name}
         animate={message.isTyping}

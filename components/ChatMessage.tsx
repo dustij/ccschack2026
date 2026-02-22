@@ -1,4 +1,6 @@
-import Image from 'next/image';
+import { AiOutlineOpenAI } from 'react-icons/ai';
+import { RiGeminiLine } from 'react-icons/ri';
+import { SiOllama } from 'react-icons/si';
 
 import { cn } from '@/lib/utils';
 import { Typewriter } from './Typewriter';
@@ -7,12 +9,10 @@ type ChatRole = 'system' | 'user';
 
 interface ChatMessageProps {
   role: ChatRole;
-  avatarImage: string;
   text: string;
   authorName?: string;
   animate?: boolean;
   onAnimationComplete?: () => void;
-  avatarAlt?: string;
   className?: string;
   bubbleClassName?: string;
   avatarClassName?: string;
@@ -42,25 +42,29 @@ function TypingCursor() {
 
 export default function ChatMessage({
   role,
-  avatarImage,
   text,
   authorName,
   animate = false,
   onAnimationComplete,
-  avatarAlt = 'Chat avatar',
   className,
   bubbleClassName,
   avatarClassName,
 }: ChatMessageProps) {
   const isSystem = role === 'system';
 
-  let nameColorClass = 'text-white/70';
+  let accentColorClass = 'text-white/70';
   const nameLower = authorName?.toLowerCase() || '';
-  if (nameLower.includes('gpt-5')) nameColorClass = 'text-blue-400 font-bold';
-  else if (nameLower.includes('gemma'))
-    nameColorClass = 'text-yellow-400 font-bold';
-  else if (nameLower.includes('llama'))
-    nameColorClass = 'text-purple-400 font-bold';
+  if (nameLower.includes('gpt-5')) accentColorClass = 'text-blue-400';
+  else if (nameLower.includes('gemma')) accentColorClass = 'text-yellow-400';
+  else if (nameLower.includes('llama')) accentColorClass = 'text-purple-400';
+
+  const AvatarIcon = nameLower.includes('gpt-5')
+    ? AiOutlineOpenAI
+    : nameLower.includes('gemma')
+      ? RiGeminiLine
+      : nameLower.includes('llama')
+        ? SiOllama
+        : AiOutlineOpenAI;
 
   return (
     <div
@@ -80,7 +84,9 @@ export default function ChatMessage({
         )}
       >
         {authorName && (
-          <div className={cn('mb-1 text-xs', nameColorClass)}>{authorName}</div>
+          <div className={cn('mb-1 text-xs font-bold', accentColorClass)}>
+            {authorName}
+          </div>
         )}
         <p className="wrap-break-word whitespace-pre-wrap">
           {animate ? (
@@ -97,18 +103,16 @@ export default function ChatMessage({
 
       <div
         className={cn(
-          'relative size-10 shrink-0 overflow-hidden rounded-full border bg-white/10 shadow-md',
+          'relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full border bg-white/10 shadow-md',
           isSystem ? 'order-1' : 'order-2',
           avatarClassName
         )}
       >
-        <Image
-          src={avatarImage}
-          alt={avatarAlt}
-          fill
-          sizes="40px"
-          className="object-cover"
-        />
+        {isSystem ? (
+          <AvatarIcon className={cn('size-5', accentColorClass)} />
+        ) : (
+          <span className="text-xs font-semibold text-white/80">You</span>
+        )}
       </div>
     </div>
   );

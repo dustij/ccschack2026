@@ -4,6 +4,13 @@ import { getModel } from '@/lib/models';
 import { Message, ChatMode } from '@/lib/types';
 import { getSystemPrompt } from '@/lib/prompts';
 
+const LEGACY_SPEAKER_PREFIX_RE =
+  /^\s*(?:\[[^\]]+\]|[A-Za-z][\w .'-]{0,40}):\s*/;
+
+function stripSpeakerPrefix(content: string): string {
+  return content.replace(LEGACY_SPEAKER_PREFIX_RE, '').trim();
+}
+
 export async function debateAction(prompt: string, history: Array<{ role: string, content: string, name?: string }>, turnCount: number, mode: ChatMode) {
     let modelConfig;
     const currentTurnIndex = turnCount % 3;
@@ -32,7 +39,8 @@ export async function debateAction(prompt: string, history: Array<{ role: string
     const adapterHistory: Message[] = history.map(msg => ({
         id: Math.random().toString(),
         role: msg.role === 'user' ? 'user' : 'assistant',
-        content: msg.name ? `[${msg.name}]: ${msg.content}` : msg.content
+        content: stripSpeakerPrefix(msg.content),
+        agentName: msg.name,
     }));
 
     try {
@@ -40,13 +48,20 @@ export async function debateAction(prompt: string, history: Array<{ role: string
 
         let userMessage = prompt;
         if (turnCount > 0) {
-            userMessage = adapterHistory.length > 0 ? adapterHistory[adapterHistory.length - 1].content : "Continue the debate.";
+            const lastMessage = adapterHistory[adapterHistory.length - 1];
+            if (lastMessage) {
+                userMessage = lastMessage.agentName
+                    ? `${lastMessage.agentName} said: "${lastMessage.content}"`
+                    : lastMessage.content;
+            } else {
+                userMessage = "Continue the debate.";
+            }
         }
 
         const text = await adapter.complete(modelConfig.system, userMessage, adapterHistory);
 
         return {
-            content: text,
+            content: stripSpeakerPrefix(text),
             modelName: modelConfig.name
         };
 
