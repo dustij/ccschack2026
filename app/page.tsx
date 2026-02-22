@@ -251,7 +251,7 @@ export default function Home() {
               Too Many AI agents? Perfect.
             </h1>
             <p className="mt-8 text-lg font-medium text-pretty text-gray-500 sm:text-xl/8 dark:text-gray-400">
-              One prompt. Multiple AI agents. No adult supervision.{' '}
+              One prompt. Many bots. No adult supervision.{' '}
             </p>{' '}
             <p className="mt-8 text-lg font-medium text-pretty text-gray-500 sm:text-xl/8 dark:text-gray-400">
               Watch them argue over who deserves to respond, spiral into

@@ -1,6 +1,6 @@
 import { AiOutlineOpenAI } from 'react-icons/ai';
+import { FaMeta } from 'react-icons/fa6';
 import { RiGeminiLine } from 'react-icons/ri';
-import { SiOllama } from 'react-icons/si';
 
 import { cn } from '@/lib/utils';
 import { Typewriter } from './Typewriter';
@@ -41,7 +41,7 @@ export default function ChatMessage({
     : nameLower.includes('gemma')
       ? RiGeminiLine
       : nameLower.includes('llama')
-        ? SiOllama
+        ? FaMeta
         : AiOutlineOpenAI;
 
   return (

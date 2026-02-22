@@ -137,6 +137,29 @@ export default function ChatPage() {
     null
   );
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const debateSessionRef = useRef(0);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false); // Can be used to disable button during user submission processing
+
+  const resetDebateState = (options?: {
+    clearMessages?: boolean;
+    clearInput?: boolean;
+  }) => {
+    debateSessionRef.current += 1;
+    setIsDebating(false);
+    setDebateStatus('idle');
+    setTurnCount(0);
+    setPendingResponder(null);
+    setLastResponderId(null);
+
+    if (options?.clearMessages) {
+      setMessages([]);
+    }
+
+    if (options?.clearInput) {
+      setInput('');
+    }
+  };
 
   // Auto-scroll
   useEffect(() => {
@@ -146,7 +169,9 @@ export default function ChatPage() {
   useEffect(() => {
     let timerId: NodeJS.Timeout | undefined;
 
-    const runNextTurn = async (responder: DebateModel) => {
+    const runNextTurn = async (responder: DebateModel, sessionId: number) => {
+      if (sessionId !== debateSessionRef.current) return;
+
       if (!isDebating || turnCount >= DEBATE_MAX_TURNS) {
         setIsDebating(false);
         setDebateStatus('idle');
@@ -173,6 +198,8 @@ export default function ChatPage() {
           responder.id
         );
 
+        if (sessionId !== debateSessionRef.current) return;
+
         setMessages((prev) => [
           ...prev,
           {
@@ -189,6 +216,8 @@ export default function ChatPage() {
         setTurnCount((prev) => prev + 1);
         setDebateStatus('typing');
       } catch (err: any) {
+        if (sessionId !== debateSessionRef.current) return;
+
         console.error('Debate loop crashed', err);
         setIsDebating(false);
         setDebateStatus('idle');
@@ -211,8 +240,9 @@ export default function ChatPage() {
       }
       setDebateStatus('waiting');
     } else if (debateStatus === 'waiting' && pendingResponder) {
+      const sessionId = debateSessionRef.current;
       timerId = setTimeout(() => {
-        void runNextTurn(pendingResponder);
+        void runNextTurn(pendingResponder, sessionId);
       }, randomDelayMs());
     }
 
@@ -261,9 +291,6 @@ export default function ChatPage() {
     );
   }
 
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false); // Can be used to disable button during user submission processing
-
   // True while the API is fetching OR while agents are still animating.
   // Blocking submission during animation keeps message order correct.
 
@@ -284,6 +311,7 @@ export default function ChatPage() {
     setInput('');
 
     // Kick off chain-reaction loop
+    debateSessionRef.current += 1;
     setTurnCount(0);
     setLastResponderId(null);
     setPendingResponder(null);
@@ -308,7 +336,7 @@ export default function ChatPage() {
       </div>
 
       <div className="relative z-10 mx-auto flex h-full min-h-0 w-full max-w-5xl flex-col px-4 py-6 sm:px-6 sm:py-8">
-        <header className="mb-4 flex items-center justify-between">
+        <header className="relative mb-4 flex items-center justify-between">
           <motion.div
             initial={{ opacity: 0, x: -90, rotate: -14, scale: 0.72 }}
             animate={{ opacity: 1, x: 0, rotate: 0, scale: 1 }}
@@ -326,6 +354,10 @@ export default function ChatPage() {
             </Button>
           </motion.div>
 
+          <h1 className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-4xl leading-none font-bangers text-white">
+            CHAT FIGHT
+          </h1>
+
           <motion.div
             initial={{ opacity: 0, x: 90, rotate: 14, scale: 0.72 }}
             animate={{ opacity: 1, x: 0, rotate: 0, scale: 1 }}
@@ -334,7 +366,8 @@ export default function ChatPage() {
             <Combobox
               value={chatMode}
               onValueChange={(nextMode) => {
-                if (isChatMode(nextMode)) {
+                if (isChatMode(nextMode) && nextMode !== chatMode) {
+                  resetDebateState({ clearMessages: true, clearInput: true });
                   setChatMode(nextMode);
                 }
               }}
@@ -416,13 +449,7 @@ export default function ChatPage() {
                 <Button
                   type="button"
                   variant="destructive"
-                  onClick={() => {
-                    setIsDebating(false);
-                    setDebateStatus('idle');
-                    setTurnCount(0);
-                    setPendingResponder(null);
-                    setLastResponderId(null);
-                  }}
+                  onClick={() => resetDebateState()}
                   className="h-11 rounded-2xl bg-red-500/80 px-4 font-bold text-white shadow-lg hover:bg-red-600/90"
                 >
                   Stop the Fight
