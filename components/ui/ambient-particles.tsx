@@ -72,8 +72,10 @@ export function AmbientParticles() {
             opacity: particle.opacity,
             animationDuration: `${particle.driftDuration}, ${particle.twinkleDuration}, ${particle.flickerDuration}`,
             animationDelay: `${particle.delay}, ${particle.delay}, ${particle.delay}`,
-            '--particle-color': particle.color,
-            '--particle-glow': particle.glow,
+            background: particle.color,
+            boxShadow: `0 0 0.4rem ${particle.glow}, 0 0 1.15rem ${particle.glow}`,
+            mixBlendMode: 'normal',
+            filter: 'blur(0.35px)',
           } as CSSProperties}
         />
       ))}

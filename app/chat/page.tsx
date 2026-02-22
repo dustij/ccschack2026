@@ -6,6 +6,13 @@ import Link from 'next/link';
 import React, { useEffect, useRef, useState } from 'react';
 
 import { debateAction } from '@/app/actions/debate';
+import {
+  CHAT_MODES,
+  DEBATE_MAX_TURNS,
+  DEBATE_MAX_WAIT_MS,
+  DEBATE_MIN_WAIT_MS,
+  THINKING_DOT_DELAYS_MS,
+} from '@/app/chat/constants';
 import ChatMessage from '@/components/ChatMessage';
 import { AmbientParticles } from '@/components/ui/ambient-particles';
 import { Button } from '@/components/ui/button';
@@ -18,12 +25,8 @@ import {
   ComboboxValue,
 } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
+import { type DebateModelId } from '@/lib/types';
 import { type ReactElement } from 'react';
-
-const MIN_WAIT_TIME_MS = 900;
-const MAX_WAIT_TIME_MS = 3000;
-
-const CHAT_MODES = ['roast', 'flirt', 'academic'] as const;
 type ChatMode = (typeof CHAT_MODES)[number];
 type ChatEntry = {
   id: string;
@@ -32,6 +35,32 @@ type ChatEntry = {
   name?: string;
   isTyping?: boolean;
 };
+type DebateModel = {
+  id: DebateModelId;
+  name: string;
+};
+
+const DEBATE_MODELS: DebateModel[] = [
+  { id: 'gpt_oss', name: 'GPT-5 nano' },
+  { id: 'gemma_2', name: 'Gemma 2' },
+  { id: 'llama_3', name: 'LLaMA 3.3' },
+];
+
+function pickNextResponder(lastResponderId: DebateModelId | null): DebateModel {
+  const candidates =
+    lastResponderId === null
+      ? DEBATE_MODELS
+      : DEBATE_MODELS.filter((model) => model.id !== lastResponderId);
+
+  return candidates[Math.floor(Math.random() * candidates.length)];
+}
+
+function randomDelayMs(): number {
+  return (
+    Math.floor(Math.random() * (DEBATE_MAX_WAIT_MS - DEBATE_MIN_WAIT_MS + 1)) +
+    DEBATE_MIN_WAIT_MS
+  );
+}
 
 const MODE_BORDER_STYLES: Record<
   ChatMode,
@@ -101,6 +130,12 @@ export default function ChatPage() {
   const [debateStatus, setDebateStatus] = useState<
     'idle' | 'fetching' | 'typing' | 'waiting'
   >('idle');
+  const [pendingResponder, setPendingResponder] = useState<DebateModel | null>(
+    null
+  );
+  const [lastResponderId, setLastResponderId] = useState<DebateModelId | null>(
+    null
+  );
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll
@@ -109,12 +144,13 @@ export default function ChatPage() {
   }, [messages, debateStatus]);
 
   useEffect(() => {
-    let timerId: NodeJS.Timeout;
+    let timerId: NodeJS.Timeout | undefined;
 
-    const runNextTurn = async () => {
-      if (!isDebating || turnCount >= 15) {
+    const runNextTurn = async (responder: DebateModel) => {
+      if (!isDebating || turnCount >= DEBATE_MAX_TURNS) {
         setIsDebating(false);
         setDebateStatus('idle');
+        setPendingResponder(null);
         return;
       }
 
@@ -125,7 +161,7 @@ export default function ChatPage() {
           messages.find((m) => m.role === 'user')?.content || '';
         const historyForDebate = messages.map((m) => ({
           role: m.role,
-          content: m.content.replace(/^.*?: /, ''), // Strip prepended names for API
+          content: m.content,
           name: m.name,
         }));
 
@@ -133,7 +169,8 @@ export default function ChatPage() {
           originalPrompt,
           historyForDebate,
           turnCount,
-          chatMode
+          chatMode,
+          responder.id
         );
 
         setMessages((prev) => [
@@ -147,61 +184,64 @@ export default function ChatPage() {
           },
         ]);
 
+        setLastResponderId(responder.id);
+        setPendingResponder(null);
         setTurnCount((prev) => prev + 1);
         setDebateStatus('typing');
       } catch (err: any) {
         console.error('Debate loop crashed', err);
         setIsDebating(false);
         setDebateStatus('idle');
+        setPendingResponder(null);
       }
     };
 
-    if (isDebating && debateStatus === 'idle') {
-      setDebateStatus('waiting');
-    } else if (isDebating && debateStatus === 'waiting') {
-      const waitTime =
-        Math.floor(Math.random() * (MAX_WAIT_TIME_MS - MIN_WAIT_TIME_MS + 1)) +
-        MIN_WAIT_TIME_MS;
-      timerId = setTimeout(() => {
-        runNextTurn();
-      }, waitTime);
+    if (!isDebating) return;
+
+    if (turnCount >= DEBATE_MAX_TURNS) {
+      setIsDebating(false);
+      setDebateStatus('idle');
+      setPendingResponder(null);
+      return;
     }
 
-    return () => clearTimeout(timerId);
-  }, [isDebating, debateStatus, turnCount, chatMode, messages]);
+    if (debateStatus === 'idle') {
+      if (!pendingResponder) {
+        setPendingResponder(pickNextResponder(lastResponderId));
+      }
+      setDebateStatus('waiting');
+    } else if (debateStatus === 'waiting' && pendingResponder) {
+      timerId = setTimeout(() => {
+        void runNextTurn(pendingResponder);
+      }, randomDelayMs());
+    }
 
-  const getNextAgentName = () => {
-    const nextAgentIndex = turnCount % 3;
-    return nextAgentIndex === 0
-      ? 'GPT-5 nano'
-      : nextAgentIndex === 1
-        ? 'Gemma 2'
-        : 'LLaMA 3.3';
-  };
+    return () => {
+      if (timerId) clearTimeout(timerId);
+    };
+  }, [
+    isDebating,
+    debateStatus,
+    turnCount,
+    chatMode,
+    messages,
+    pendingResponder,
+    lastResponderId,
+  ]);
 
   let activeStatusMessage = null;
-  if (isDebating && debateStatus === 'waiting') {
-    activeStatusMessage = `${getNextAgentName()} is thinking...`;
+  if (isDebating && debateStatus === 'fetching' && pendingResponder) {
+    activeStatusMessage = `${pendingResponder.name} is thinking...`;
   }
 
   const renderedMessages: ReactElement[] = [];
   for (let i = 0; i < messages.length; i += 1) {
     const message = messages[i];
 
-    let avatarImage = '/window.svg';
-    if (message.role === 'system') {
-      const nameLower = message.name?.toLowerCase() || '';
-      if (nameLower.includes('gpt-5')) avatarImage = '/openai.svg';
-      else if (nameLower.includes('gemma')) avatarImage = '/gemini.svg';
-      else if (nameLower.includes('llama')) avatarImage = '/meta.svg';
-      else avatarImage = '/globe.svg';
-    }
-
     renderedMessages.push(
       <ChatMessage
         key={message.id}
         role={message.role}
-        avatarImage={avatarImage}
         text={message.content}
         authorName={message.name}
         animate={message.isTyping}
@@ -245,6 +285,8 @@ export default function ChatPage() {
 
     // Kick off chain-reaction loop
     setTurnCount(0);
+    setLastResponderId(null);
+    setPendingResponder(null);
     setIsDebating(true);
     setDebateStatus('idle'); // Starting from idle immediately triggers the first AI in the loop
   };
@@ -342,18 +384,13 @@ export default function ChatPage() {
                   {renderedMessages}
                   {activeStatusMessage && (
                     <div className="flex animate-pulse items-center gap-2 p-3 text-sm text-white/70 italic">
-                      <div
-                        className="h-2 w-2 animate-bounce rounded-full bg-white/70"
-                        style={{ animationDelay: '0ms' }}
-                      ></div>
-                      <div
-                        className="h-2 w-2 animate-bounce rounded-full bg-white/70"
-                        style={{ animationDelay: '150ms' }}
-                      ></div>
-                      <div
-                        className="h-2 w-2 animate-bounce rounded-full bg-white/70"
-                        style={{ animationDelay: '300ms' }}
-                      ></div>
+                      {THINKING_DOT_DELAYS_MS.map((delayMs) => (
+                        <div
+                          key={delayMs}
+                          className="h-2 w-2 animate-bounce rounded-full bg-white/70"
+                          style={{ animationDelay: `${delayMs}ms` }}
+                        ></div>
+                      ))}
                       <span className="ml-2">{activeStatusMessage}</span>
                     </div>
                   )}
@@ -383,6 +420,8 @@ export default function ChatPage() {
                     setIsDebating(false);
                     setDebateStatus('idle');
                     setTurnCount(0);
+                    setPendingResponder(null);
+                    setLastResponderId(null);
                   }}
                   className="h-11 rounded-2xl bg-red-500/80 px-4 font-bold text-white shadow-lg hover:bg-red-600/90"
                 >
