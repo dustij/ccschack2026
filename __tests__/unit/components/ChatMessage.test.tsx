@@ -1,13 +1,17 @@
 /**
  * Tests for components/ChatMessage.tsx
  *
- * next/image and Typewriter are mocked so tests run in jsdom without
- * real image optimisation or timer complexity.
+ * The component uses React Icons (SVG icons from react-icons) instead of
+ * next/image, so avatar assertions check for <svg> elements rather than
+ * <img> elements with src/alt attributes.
+ *
+ * Typewriter is mocked so animation tests are instant and deterministic.
  *
  * Covers:
  *  - User messages align right; system messages align left
  *  - Message text is rendered
- *  - Avatar image src is passed through correctly
+ *  - System message avatar renders an SVG icon
+ *  - User message avatar renders "You" text
  *  - Author name label is shown / hidden as expected
  *  - Agent-specific colour classes (blue / yellow / purple)
  *  - Default colour for unknown agents
@@ -20,12 +24,6 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 // ── Module mocks ──────────────────────────────────────────────────────────────
-
-vi.mock('next/image', () => ({
-  default: ({ src, alt }: { src: string; alt: string }) => (
-    <img src={src} alt={alt} />
-  ),
-}));
 
 vi.mock('@/components/Typewriter', () => ({
   Typewriter: ({
@@ -48,7 +46,6 @@ import ChatMessage from '@/components/ChatMessage';
 
 const BASE_PROPS = {
   role: 'system' as const,
-  avatarImage: '/globe.svg',
   text: 'Hello world',
 };
 
@@ -83,19 +80,18 @@ describe('ChatMessage — text', () => {
 // ── Avatar ────────────────────────────────────────────────────────────────────
 
 describe('ChatMessage — avatar', () => {
-  it('renders the avatar image with the provided src', () => {
-    render(<ChatMessage {...BASE_PROPS} avatarImage="/openai.svg" />);
-    expect(screen.getByRole('img')).toHaveAttribute('src', '/openai.svg');
+  it('system message renders an SVG icon in the avatar container', () => {
+    const { container } = render(<ChatMessage {...BASE_PROPS} role="system" />);
+    // The avatar wrapper has rounded-full; it should contain an <svg> from react-icons
+    const avatarWrapper = container.querySelector('.rounded-full');
+    expect(avatarWrapper).toBeInTheDocument();
+    expect(avatarWrapper?.querySelector('svg')).toBeInTheDocument();
   });
 
-  it('uses avatarAlt as the image alt text', () => {
-    render(<ChatMessage {...BASE_PROPS} avatarAlt="GPT-5 nano avatar" />);
-    expect(screen.getByRole('img')).toHaveAttribute('alt', 'GPT-5 nano avatar');
-  });
-
-  it('falls back to "Chat avatar" when avatarAlt is not provided', () => {
-    render(<ChatMessage {...BASE_PROPS} />);
-    expect(screen.getByRole('img')).toHaveAttribute('alt', 'Chat avatar');
+  it('user message renders "You" text in the avatar container', () => {
+    const { container } = render(<ChatMessage {...BASE_PROPS} role="user" />);
+    const avatarWrapper = container.querySelector('.rounded-full');
+    expect(avatarWrapper?.textContent).toContain('You');
   });
 });
 
