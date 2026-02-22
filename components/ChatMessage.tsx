@@ -1,6 +1,6 @@
 import { AiOutlineOpenAI } from 'react-icons/ai';
+import { FaMeta } from 'react-icons/fa6';
 import { RiGeminiLine } from 'react-icons/ri';
-import { SiOllama } from 'react-icons/si';
 
 import { cn } from '@/lib/utils';
 import { Typewriter } from './Typewriter';
@@ -32,16 +32,16 @@ export default function ChatMessage({
 
   let accentColorClass = 'text-white/70';
   const nameLower = authorName?.toLowerCase() || '';
-  if (nameLower.includes('gpt-5')) accentColorClass = 'text-blue-400';
-  else if (nameLower.includes('gemma')) accentColorClass = 'text-yellow-400';
-  else if (nameLower.includes('llama')) accentColorClass = 'text-purple-400';
+  if (nameLower.includes('gpt-5')) accentColorClass = 'text-emerald-400';
+  else if (nameLower.includes('gemma')) accentColorClass = 'text-blue-400';
+  else if (nameLower.includes('llama')) accentColorClass = 'text-orange-400';
 
   const AvatarIcon = nameLower.includes('gpt-5')
     ? AiOutlineOpenAI
     : nameLower.includes('gemma')
       ? RiGeminiLine
       : nameLower.includes('llama')
-        ? SiOllama
+        ? FaMeta
         : AiOutlineOpenAI;
 
   return (
@@ -54,7 +54,7 @@ export default function ChatMessage({
     >
       <article
         className={cn(
-          'relative max-w-[85%] border bg-black/35 px-4 py-3 text-sm leading-relaxed text-white shadow-lg backdrop-blur-sm sm:max-w-xl',
+          'relative max-w-[85%] border bg-black/15 px-4 py-3 text-sm leading-relaxed text-white shadow-lg backdrop-blur-sm sm:max-w-xl',
           isSystem
             ? 'order-2 rounded-2xl rounded-bl-none'
             : 'order-1 rounded-2xl rounded-br-none',

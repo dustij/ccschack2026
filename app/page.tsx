@@ -1,7 +1,7 @@
 'use client';
 
-import { AmbientParticles } from '@/components/ui/ambient-particles';
 import { ContributorsMarquee } from '@/components/ContributorsMarquee';
+import { AmbientParticles } from '@/components/ui/ambient-particles';
 import geminiImg from '@/public/assets/gemini.png';
 import chatgptImg from '@/public/assets/gpt.png';
 import ollamaImg from '@/public/assets/ollama.png';
@@ -46,7 +46,7 @@ type Persona = {
 const AI_PERSONAS: Persona[] = [
   {
     id: 'chatgpt',
-    name: 'ChatGPT',
+    name: 'GPT-5 nano',
     role: 'The Intellectual',
     ai: 'OpenAI',
     color: '#10a37f',
@@ -61,7 +61,7 @@ const AI_PERSONAS: Persona[] = [
   },
   {
     id: 'gemini',
-    name: 'Gemini',
+    name: 'Gemma 2',
     role: 'The Speedster',
     ai: 'Google',
     color: '#4285f4',
@@ -76,7 +76,7 @@ const AI_PERSONAS: Persona[] = [
   },
   {
     id: 'ollama',
-    name: 'Ollama',
+    name: 'LLaMA 3.3',
     role: 'The Cool One',
     ai: 'Meta Llama 3',
     color: '#f97316',
@@ -206,7 +206,7 @@ export default function Home() {
                 'polygon(73.6% 51.7%, 91.7% 11.8%, 100% 46.4%, 97.4% 82.2%, 92.5% 84.9%, 75.7% 64%, 55.3% 47.5%, 46.5% 49.4%, 45% 62.9%, 50.3% 87.2%, 21.3% 64.1%, 0.1% 100%, 5.4% 51.1%, 21.4% 63.9%, 58.9% 0.2%, 73.6% 51.7%)',
             }}
             className="from-candy-blue to-candy-pink aspect-1108/632 w-277 bg-linear-to-r opacity-20"
-          // className="aspect-1108/632 w-277 bg-linear-to-r from-[#80caff] to-[#4f46e5] opacity-20"
+            // className="aspect-1108/632 w-277 bg-linear-to-r from-[#80caff] to-[#4f46e5] opacity-20"
           />
         </div>
       </div>
@@ -252,7 +252,7 @@ export default function Home() {
               Too Many AI agents? Perfect.
             </h1>
             <p className="mt-8 text-lg font-medium text-pretty text-gray-500 sm:text-xl/8 dark:text-gray-400">
-              One prompt. Multiple AI agents. No adult supervision.{' '}
+              One prompt. Many bots. No adult supervision.{' '}
             </p>{' '}
             <p className="mt-8 text-lg font-medium text-pretty text-gray-500 sm:text-xl/8 dark:text-gray-400">
               Watch them argue over who deserves to respond, spiral into
@@ -300,10 +300,13 @@ export default function Home() {
             <div className="flex h-96 max-w-3xl sm:max-w-5xl lg:max-w-none">
               {/* <div className="h-full w-[1000] bg-white"></div> */}
               {/* <div className="relative h-full w-1000 bg-white"> */}
-              <iframe
-                src="https://my.spline.design/genkubgreetingrobot-3AGOK06E2VWQMgtsn90pbrsr/"
-                className="pointer-events-none z-[-1] h-full w-full rounded-xl lg:absolute lg:top-9 lg:left-100 xl:left-113"
-              />
+              <div className="pointer-events-none relative z-[-1] h-full w-full overflow-hidden rounded-xl lg:absolute lg:top-9 lg:left-100 xl:left-113">
+                <iframe
+                  title="3D greeting robot animation"
+                  src="https://my.spline.design/genkubgreetingrobot-3AGOK06E2VWQMgtsn90pbrsr/"
+                  className="h-[calc(100%+28px)] w-[calc(100%+56px)] border-0"
+                />
+              </div>
               {/* </div> */}
 
               {/* <img
@@ -446,14 +449,14 @@ export default function Home() {
               Thank you for checking out our project.
             </p>
             <p className="mt-3 text-sm font-medium text-white/70 sm:text-base">
-              We appreciate your time and hope you had fun exploring the chaos.
+              We appreciate your time and hope you had fun.
             </p>
             <ContributorsMarquee />
           </motion.div>
         </section>
         <footer className="mx-auto max-w-7xl px-6 pb-10 lg:px-8">
-          <div className="rounded-2xl border border-white/20 bg-black/20 px-4 py-4 text-center text-xs font-medium tracking-wide text-white/75 backdrop-blur-sm sm:text-sm">
-            &copy; {currentYear} AI Personas Project. All rights reserved.
+          <div className="rounded-2xl px-4 py-4 text-center text-xs font-medium tracking-wide text-white/75 backdrop-blur-sm sm:text-sm">
+            &copy; {currentYear} Model Mayhem. All rights reserved.
           </div>
         </footer>
       </div>

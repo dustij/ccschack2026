@@ -1,4 +1,4 @@
-export type ChatMode = 'academic' | 'flirt' | 'roast';
+export type ChatMode = 'Academic' | 'Flirt' | 'Roast';
 export type Role = 'user' | 'assistant';
 export type DebateModelId = 'gpt_oss' | 'gemma_2' | 'llama_3';
 
