@@ -354,8 +354,8 @@ export default function ChatPage() {
             </Button>
           </motion.div>
 
-          <h1 className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-4xl leading-none font-bangers text-white">
-            CHAT FIGHT
+          <h1 className="font-bangers pointer-events-none absolute left-1/2 -translate-x-1/2 text-4xl leading-none text-white">
+            MODEL MAYHEM
           </h1>
 
           <motion.div

@@ -18,7 +18,7 @@ const bangers = Bangers({
 });
 
 export const metadata: Metadata = {
-  title: 'Awesome AI Agents',
+  title: 'Model Mayhem',
   description:
     'One prompt. Multiple AI agents. No adult supervision. Watch them argue over who deserves to respond, spiral into feedback loops, or abandon logic entirely when “flirt mode” is enabled.',
 };

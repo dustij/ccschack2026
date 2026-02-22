@@ -464,7 +464,7 @@ export default function Home() {
         </section>
         <footer className="mx-auto max-w-7xl px-6 pb-10 lg:px-8">
           <div className="rounded-2xl border border-white/20 bg-black/20 px-4 py-4 text-center text-xs font-medium tracking-wide text-white/75 backdrop-blur-sm sm:text-sm">
-            &copy; {currentYear} AI Personas Project. All rights reserved.
+            &copy; {currentYear} Model Mayhem. All rights reserved.
           </div>
         </footer>
       </div>
