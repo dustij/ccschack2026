@@ -1,6 +1,7 @@
 'use client';
 
 import { AmbientParticles } from '@/components/ui/ambient-particles';
+import { ContributorsMarquee } from '@/components/ContributorsMarquee';
 import geminiImg from '@/public/assets/gemini.png';
 import chatgptImg from '@/public/assets/gpt.png';
 import ollamaImg from '@/public/assets/ollama.png';
@@ -205,7 +206,7 @@ export default function Home() {
                 'polygon(73.6% 51.7%, 91.7% 11.8%, 100% 46.4%, 97.4% 82.2%, 92.5% 84.9%, 75.7% 64%, 55.3% 47.5%, 46.5% 49.4%, 45% 62.9%, 50.3% 87.2%, 21.3% 64.1%, 0.1% 100%, 5.4% 51.1%, 21.4% 63.9%, 58.9% 0.2%, 73.6% 51.7%)',
             }}
             className="from-candy-blue to-candy-pink aspect-1108/632 w-277 bg-linear-to-r opacity-20"
-            // className="aspect-1108/632 w-277 bg-linear-to-r from-[#80caff] to-[#4f46e5] opacity-20"
+          // className="aspect-1108/632 w-277 bg-linear-to-r from-[#80caff] to-[#4f46e5] opacity-20"
           />
         </div>
       </div>
@@ -450,16 +451,7 @@ export default function Home() {
             <p className="mt-3 text-sm font-medium text-white/70 sm:text-base">
               We appreciate your time and hope you had fun exploring the chaos.
             </p>
-            <p className="mt-6 text-sm font-medium text-white/70 sm:text-base">
-              Created by:
-            </p>
-            <ul className="mt-3 text-sm font-medium text-white/70 sm:text-base">
-              <li>Dusti Johnson</li>
-              <li>Sapnish Sharma</li>
-              <li>Rajdeep Sah</li>
-              <li>Ariel L</li>
-              <li>Ujjwal Sitaula</li>
-            </ul>
+            <ContributorsMarquee />
           </motion.div>
         </section>
         <footer className="mx-auto max-w-7xl px-6 pb-10 lg:px-8">
