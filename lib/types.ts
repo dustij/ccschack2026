@@ -1,5 +1,6 @@
 export type ChatMode = 'academic' | 'flirt' | 'roast';
 export type Role = 'user' | 'assistant';
+export type DebateModelId = 'gpt_oss' | 'gemma_2' | 'llama_3';
 
 export interface Message {
   role: Role;

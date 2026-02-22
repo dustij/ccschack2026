@@ -18,28 +18,6 @@ interface ChatMessageProps {
   avatarClassName?: string;
 }
 
-/** Three animated dots shown while the agent hasn't typed its first character yet. */
-function ThinkingDots() {
-  return (
-    <span className="flex items-center gap-[3px] py-0.5" aria-label="Thinking…">
-      <span className="thinking-dot size-1.5 rounded-full bg-white/60" />
-      <span className="thinking-dot size-1.5 rounded-full bg-white/60" />
-      <span className="thinking-dot size-1.5 rounded-full bg-white/60" />
-    </span>
-  );
-}
-
-/** A blinking I-beam cursor appended while the agent is still typing. */
-function TypingCursor() {
-  return (
-    <span
-      aria-hidden="true"
-      className="ml-[1px] inline-block h-[0.9em] w-[2px] translate-y-[0.05em] rounded-[1px] bg-white/75"
-      style={{ animation: 'cursor-blink 0.8s step-end infinite' }}
-    />
-  );
-}
-
 export default function ChatMessage({
   role,
   text,
