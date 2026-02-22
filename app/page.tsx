@@ -299,10 +299,13 @@ export default function Home() {
             <div className="flex h-96 max-w-3xl sm:max-w-5xl lg:max-w-none">
               {/* <div className="h-full w-[1000] bg-white"></div> */}
               {/* <div className="relative h-full w-1000 bg-white"> */}
-              <iframe
-                src="https://my.spline.design/genkubgreetingrobot-3AGOK06E2VWQMgtsn90pbrsr/"
-                className="pointer-events-none z-[-1] h-full w-full rounded-xl lg:absolute lg:top-9 lg:left-100 xl:left-113"
-              />
+              <div className="pointer-events-none relative z-[-1] h-full w-full overflow-hidden rounded-xl lg:absolute lg:top-9 lg:left-100 xl:left-113">
+                <iframe
+                  title="3D greeting robot animation"
+                  src="https://my.spline.design/genkubgreetingrobot-3AGOK06E2VWQMgtsn90pbrsr/"
+                  className="h-[calc(100%+28px)] w-[calc(100%+56px)] border-0"
+                />
+              </div>
               {/* </div> */}
 
               {/* <img
