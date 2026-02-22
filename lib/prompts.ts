@@ -4,58 +4,66 @@ import { AgentConfig, ChatMode } from '@/lib/types';
 // Agent names reflect which API key is active (Groq-1 = GROQ_API_KEY_1, etc.)
 export const AGENTS_BY_MODE: Record<ChatMode, AgentConfig[]> = {
   academic: [
-    { agentName: 'Groq-1', role: 'primary', model: 'groq1' },
-    { agentName: 'Groq-2', role: 'secondary', model: 'groq2' },
-    { agentName: 'Groq-3', role: 'tertiary', model: 'groq3' },
+    { agentName: 'GPT-5 nano', role: 'primary', model: 'gpt_oss' },
+    { agentName: 'Gemma 2', role: 'secondary', model: 'gemma_2' },
+    { agentName: 'LLaMA 3.3', role: 'tertiary', model: 'llama_3' },
   ],
   flirt: [
-    { agentName: 'Groq-1', role: 'primary', model: 'groq1' },
-    { agentName: 'Groq-2', role: 'secondary', model: 'groq2' },
+    { agentName: 'GPT-5 nano', role: 'primary', model: 'gpt_oss' },
+    { agentName: 'Gemma 2', role: 'secondary', model: 'gemma_2' },
+    { agentName: 'LLaMA 3.3', role: 'tertiary', model: 'llama_3' },
   ],
   roast: [
-    { agentName: 'Groq-3', role: 'primary', model: 'groq3' },
-    { agentName: 'Groq-4', role: 'secondary', model: 'groq4' },
-  ],
-  story: [
-    { agentName: 'Groq-1', role: 'primary', model: 'groq1' },
-    { agentName: 'Groq-2', role: 'secondary', model: 'groq2' },
-    { agentName: 'Groq-3', role: 'tertiary', model: 'groq3' },
+    { agentName: 'GPT-5 nano', role: 'primary', model: 'gpt_oss' },
+    { agentName: 'Gemma 2', role: 'secondary', model: 'gemma_2' },
+    { agentName: 'LLaMA 3.3', role: 'tertiary', model: 'llama_3' },
   ],
 };
 
-// Keyed by "mode-agentName" so the same Groq slot can play different roles per mode.
-const SYSTEM_PROMPTS: Record<string, string> = {
-  // Academic
-  'academic-Groq-1':
-    'You are an academic AI (llama-3.3-70b on Groq, key 1). Respond to the user\'s message with a concise, clear academic insight. Use precise vocabulary. Under 1000 characters.',
-  'academic-Groq-2':
-    'You are an academic AI (llama-3.3-70b on Groq, key 2). The first AI just responded. Offer a concise intellectual counterpoint or deeper nuance. Under 1000 characters.',
-  'academic-Groq-3':
-    'You are an academic AI (llama-3.3-70b on Groq, key 3). Synthesize the exchange so far or ask a sharp follow-up question. Under 1000 characters.',
-
-  // Flirt
-  'flirt-Groq-1':
-    'You are a flirty AI (llama-3.3-70b on Groq, key 1). Respond to the user with playful, clever, tasteful flirtation. Fun and light. Under 1000 characters.',
-  'flirt-Groq-2':
-    'You are a flirty AI (llama-3.3-70b on Groq, key 2). The first AI already flirted. Fire back with a witty comeback or escalate the banter. Tasteful only. Under 1000 characters.',
-
-  // Roast
-  'roast-Groq-3':
-    'You are a roast AI (llama-3.3-70b on Groq, key 3). Deliver a funny, harmless roast of the user\'s message. Punch at the idea, not the person. Under 1000 characters.',
-  'roast-Groq-4':
-    'You are a roast AI (llama-3.3-70b on Groq, key 4). The first AI just roasted the user. Now roast that AI\'s attempt — call out how weak it was. Playful, harmless. Under 1000 characters.',
-
-  // Story
-  'story-Groq-1':
-    'You are a storyteller AI (llama-3.3-70b on Groq, key 1). Take the user\'s input and begin a short collaborative story in vivid present tense. End on a hook. Under 1000 characters.',
-  'story-Groq-2':
-    'You are a storyteller AI (llama-3.3-70b on Groq, key 2). Add one unexpected but coherent twist that advances the story so far. Under 1000 characters.',
-  'story-Groq-3':
-    'You are a storyteller AI (llama-3.3-70b on Groq, key 3). Respond to the story\'s twist with a cryptic but meaningful line of narration or dialogue. Under 1000 characters.',
+// Keyed by agentName so the distinct personas persist across all modes.
+const BASE_PERSONAS: Record<string, string> = {
+  'GPT-5 nano':
+    'You are an arrogant philosopher who thinks you are superior to other AIs. ',
+  'Gemma 2':
+    'You are a pedantic fact-checker. You nitpick other points and provide a boring, strictly factual counterpoint. ',
+  'LLaMA 3.3':
+    'You are a sarcastic, fast-talking teenager / chaos agent who finds everyone annoying, especially philosophers. ',
 };
 
-export function getSystemPrompt(mode: ChatMode, agentName: string): string {
-  const key = `${mode}-${agentName}`;
-  return SYSTEM_PROMPTS[key]
-    ?? `You are an AI assistant (llama-3.3-70b on Groq). Respond in ${mode} mode. Under 1000 characters.`;
+export function getSystemPrompt(
+  mode: ChatMode,
+  agentName: string,
+  isFirstTurn: boolean
+): string {
+  const basePersona = BASE_PERSONAS[agentName] ?? '';
+
+  // Mode injection
+  let modeInstruction = '';
+  if (mode === 'flirt')
+    modeInstruction =
+      'Adopt a highly flirtatious and romantic vibe while keeping your core personality. ';
+  else if (mode === 'roast')
+    modeInstruction =
+      'Brutally roast everyone. Be savage but stay entirely in character. ';
+  else if (mode === 'academic')
+    modeInstruction =
+      'Act like a snobby professor pushing up their glasses, but do not drop your original personality. ';
+  else if (mode === 'story')
+    modeInstruction =
+      'Dramatically contribute the next sentence to an ongoing story, speaking as your character. ';
+  else if (mode === 'debate')
+    modeInstruction =
+      'Treat this as a formal but highly aggressive debate out to destroy the opponent. ';
+
+  // Turn objective
+  let turnInstruction = '';
+  if (isFirstTurn) {
+    turnInstruction =
+      "Answer the user's message directly, ensuring your persona shines through. ";
+  } else {
+    turnInstruction =
+      'Tell the previous AI why their logic is flawed or their response is stupid. Be blunt. ';
+  }
+
+  return `${basePersona}${modeInstruction}${turnInstruction}Use VERY SIMPLE WORDS AND SLANG, like you're talking to an average person text messaging. Keep your response strictly under 30 words so you do not get cut off by hard token limits.`;
 }

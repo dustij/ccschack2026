@@ -1,4 +1,4 @@
-export type ChatMode = 'academic' | 'flirt' | 'roast' | 'story';
+export type ChatMode = 'academic' | 'flirt' | 'roast';
 export type Role = 'user' | 'assistant';
 
 export interface Message {

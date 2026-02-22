@@ -14,7 +14,7 @@ export async function runAgents(
   const results: AgentResponse[] = [];
 
   for (const agentConfig of agentConfigs) {
-    const systemPrompt = getSystemPrompt(mode, agentConfig.agentName);
+    const systemPrompt = getSystemPrompt(mode, agentConfig.agentName, results.length === 0);
     const model = getModel(agentConfig.model);
 
     // Primary agent sees only the user message.
