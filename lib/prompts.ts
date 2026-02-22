@@ -3,17 +3,17 @@ import { AgentConfig, ChatMode } from '@/lib/types';
 // Agent pipeline for each mode — order matters (primary → secondary → tertiary)
 // Agent names reflect which API key is active (Groq-1 = GROQ_API_KEY_1, etc.)
 export const AGENTS_BY_MODE: Record<ChatMode, AgentConfig[]> = {
-  academic: [
+  Academic: [
     { agentName: 'GPT-5 nano', role: 'primary', model: 'gpt_oss' },
     { agentName: 'Gemma 2', role: 'secondary', model: 'gemma_2' },
     { agentName: 'LLaMA 3.3', role: 'tertiary', model: 'llama_3' },
   ],
-  flirt: [
+  Flirt: [
     { agentName: 'GPT-5 nano', role: 'primary', model: 'gpt_oss' },
     { agentName: 'Gemma 2', role: 'secondary', model: 'gemma_2' },
     { agentName: 'LLaMA 3.3', role: 'tertiary', model: 'llama_3' },
   ],
-  roast: [
+  Roast: [
     { agentName: 'GPT-5 nano', role: 'primary', model: 'gpt_oss' },
     { agentName: 'Gemma 2', role: 'secondary', model: 'gemma_2' },
     { agentName: 'LLaMA 3.3', role: 'tertiary', model: 'llama_3' },
@@ -22,18 +22,18 @@ export const AGENTS_BY_MODE: Record<ChatMode, AgentConfig[]> = {
 
 // Keyed by agentName so the distinct personas persist across all modes.
 const BASE_PERSONAS: Record<string, string> = {
-  'GPT-5 nano':
-    'Your flavor is confident, cerebral, and a little smug.',
-  'Gemma 2':
-    'Your flavor is meticulous, factual, and nitpicky.',
-  'LLaMA 3.3':
-    'Your flavor is fast, sarcastic, and chaotic.',
+  'GPT-5 nano': 'Your flavor is confident, cerebral, and a little smug.',
+  'Gemma 2': 'Your flavor is meticulous, factual, and nitpicky.',
+  'LLaMA 3.3': 'Your flavor is fast, sarcastic, and chaotic.',
 };
 
 const SHARED_OUTPUT_RULES =
   'Write one short chat bubble, 1-2 sentences, max 32 words, plain text only.';
 
-function getFirstTurnInstruction(agentName: string, basePersona: string): string {
+function getFirstTurnInstruction(
+  agentName: string,
+  basePersona: string
+): string {
   return [
     `You are ${agentName}. ${basePersona}`,
     'This is the first model turn.',
@@ -45,7 +45,7 @@ function getFirstTurnInstruction(agentName: string, basePersona: string): string
 }
 
 function getFollowUpModeInstruction(mode: ChatMode): string {
-  if (mode === 'roast') {
+  if (mode === 'Roast') {
     return [
       'Roast mode behavior:',
       'Compete for the spotlight and argue you should be the responder.',
@@ -54,7 +54,7 @@ function getFollowUpModeInstruction(mode: ChatMode): string {
     ].join(' ');
   }
 
-  if (mode === 'flirt') {
+  if (mode === 'Flirt') {
     return [
       'Flirt mode behavior:',
       'Flirt heavily with the other models.',
