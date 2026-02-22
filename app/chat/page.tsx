@@ -20,7 +20,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { type ReactElement } from 'react';
 
-const CHAT_MODES = ['roast', 'flirt', 'academic', 'story', 'debate'] as const;
+const MIN_WAIT_TIME_MS = 900;
+const MAX_WAIT_TIME_MS = 3000;
+
+const CHAT_MODES = ['roast', 'flirt', 'academic'] as const;
 type ChatMode = (typeof CHAT_MODES)[number];
 type ChatEntry = {
   id: string;
@@ -49,14 +52,6 @@ const MODE_BORDER_STYLES: Record<
     messageBubble: 'border-none',
     messageAvatar: 'border-none',
   },
-  roast: {
-    panel: 'border-candy-blue/45',
-    footer: 'border-candy-blue/45',
-    modeTrigger: 'border-candy-blue/45 hover:border-candy-blue/70',
-    modePopup: 'border-candy-blue/35',
-    messageBubble: 'border-none',
-    messageAvatar: 'border-none',
-  },
   academic: {
     panel: 'border-candy-mint/45',
     footer: 'border-candy-mint/45',
@@ -65,22 +60,12 @@ const MODE_BORDER_STYLES: Record<
     messageBubble: 'border-none',
     messageAvatar: 'border-none',
   },
-  story: {
+  roast: {
     panel: 'border-candy-purple/45',
     footer: 'border-candy-purple/45',
     modeTrigger: 'border-candy-purple/45 hover:border-candy-purple/70',
     modePopup: 'border-candy-purple/35',
     messageBubble: 'border-none',
-    messageTail: 'border-candy-purple/45',
-    messageAvatar: 'border-none',
-  },
-  debate: {
-    panel: 'border-orange-500/45',
-    footer: 'border-orange-500/45',
-    modeTrigger: 'border-orange-500/45 hover:border-orange-500/70',
-    modePopup: 'border-orange-500/35',
-    messageBubble: 'border-none',
-    messageTail: 'border-orange-500/45',
     messageAvatar: 'border-none',
   },
 };
@@ -174,7 +159,9 @@ export default function ChatPage() {
     if (isDebating && debateStatus === 'idle') {
       setDebateStatus('waiting');
     } else if (isDebating && debateStatus === 'waiting') {
-      const waitTime = Math.floor(Math.random() * 5000) + 5000;
+      const waitTime =
+        Math.floor(Math.random() * (MAX_WAIT_TIME_MS - MIN_WAIT_TIME_MS + 1)) +
+        MIN_WAIT_TIME_MS;
       timerId = setTimeout(() => {
         runNextTurn();
       }, waitTime);
@@ -229,7 +216,6 @@ export default function ChatPage() {
           }
         }}
         bubbleClassName={modeBorders.messageBubble}
-        bubbleTailClassName={modeBorders.messageTail}
         avatarClassName={modeBorders.messageAvatar}
       />
     );
@@ -240,7 +226,6 @@ export default function ChatPage() {
 
   // True while the API is fetching OR while agents are still animating.
   // Blocking submission during animation keeps message order correct.
-  const isBusy = isLoading || typingMessages.length > 0;
 
   const onSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -265,7 +250,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="to-candy-purple-dark relative isolate min-h-dvh overflow-hidden bg-white bg-linear-60 dark:from-black">
+    <div className="to-candy-purple-dark relative isolate h-dvh overflow-hidden bg-white bg-linear-60 dark:from-black">
       <AmbientParticles />
       <div
         aria-hidden="true"
@@ -280,7 +265,7 @@ export default function ChatPage() {
         />
       </div>
 
-      <div className="relative z-10 mx-auto flex min-h-dvh w-full max-w-5xl flex-col px-4 py-6 sm:px-6 sm:py-8">
+      <div className="relative z-10 mx-auto flex h-full min-h-0 w-full max-w-5xl flex-col px-4 py-6 sm:px-6 sm:py-8">
         <header className="mb-4 flex items-center justify-between">
           <motion.div
             initial={{ opacity: 0, x: -90, rotate: -14, scale: 0.72 }}
@@ -337,13 +322,13 @@ export default function ChatPage() {
           </motion.div>
         </header>
 
-        <main className="flex flex-1 flex-col gap-4">
+        <main className="flex min-h-0 flex-1 flex-col gap-4">
           {/* CHAT MESSAGES */}
           <motion.section
             initial={{ opacity: 0, y: -140, rotate: -2.4, scale: 0.93 }}
             animate={{ opacity: 1, y: 0, rotate: 0, scale: 1 }}
             transition={PANEL_TRANSITION}
-            className={`bg-candy-purple-dark/55 relative flex-1 overflow-hidden rounded-3xl border shadow-2xl shadow-black/30 backdrop-blur-md ${modeBorders.panel}`}
+            className={`bg-candy-purple-dark/55 relative min-h-0 flex-1 overflow-hidden rounded-3xl border shadow-2xl shadow-black/30 backdrop-blur-md ${modeBorders.panel}`}
           >
             {/* Gradient vignette — purely decorative */}
             <div
@@ -351,9 +336,9 @@ export default function ChatPage() {
               className="pointer-events-none absolute inset-0 z-10 bg-linear-to-b from-white/5 via-transparent to-black/25"
             />
 
-            <div className="relative z-10 flex h-full flex-col justify-end gap-3">
+            <div className="relative z-10 h-full min-h-0 overflow-y-auto overscroll-contain p-5">
               {renderedMessages.length > 0 ? (
-                <>
+                <div className="flex min-h-full flex-col justify-end gap-3">
                   {renderedMessages}
                   {activeStatusMessage && (
                     <div className="flex animate-pulse items-center gap-2 p-3 text-sm text-white/70 italic">
@@ -373,7 +358,7 @@ export default function ChatPage() {
                     </div>
                   )}
                   <div ref={messagesEndRef} />
-                </>
+                </div>
               ) : (
                 <div className="flex h-full items-center justify-center text-sm text-white/50">
                   Start the chat by sending a message below.
@@ -405,7 +390,7 @@ export default function ChatPage() {
                 </Button>
               )}
               <Input
-                disabled={isBusy}
+                disabled={isLoading}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 type="text"
@@ -415,7 +400,7 @@ export default function ChatPage() {
               <motion.div>
                 <Button
                   type="submit"
-                  disabled={isBusy}
+                  disabled={isLoading}
                   size="icon-xs"
                   className="text-candy-purple-dark size-10 rounded-full bg-white/30 hover:bg-white/35"
                   aria-label="Send message"

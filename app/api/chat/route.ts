@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ChatRequest, ChatResponse, ChatMode } from '@/lib/types';
 import { runAgents } from '@/lib/orchestrator';
 
-const VALID_MODES: ChatMode[] = ['academic', 'flirt', 'roast', 'story'];
+const VALID_MODES: ChatMode[] = ['academic', 'flirt', 'roast'];
 
 export async function POST(req: NextRequest): Promise<NextResponse<ChatResponse>> {
   let body: ChatRequest;

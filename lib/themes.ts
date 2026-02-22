@@ -145,37 +145,8 @@ const roast: ModeTheme = {
   }),
 };
 
-// ─── Story ────────────────────────────────────────────────────────────────────
-const story: ModeTheme = {
-  light: {
-    page: 'bg-amber-50',
-    header: 'bg-white border-amber-100',
-    titleText: 'text-neutral-900',
-    toggleBtn: 'text-neutral-400 hover:text-neutral-700',
-    list: 'bg-amber-50',
-    emptyTitle: 'text-neutral-500',
-    emptySub: 'text-neutral-400',
-    loadingDot: 'bg-amber-400',
-    loadingBg: 'bg-amber-100',
-    userBubble: 'bg-amber-600 text-white',
-    agentBubble: 'bg-white border border-amber-100 text-neutral-800 shadow-sm',
-    inputArea: 'bg-white border-amber-100',
-    textarea: 'border-amber-200 bg-white text-neutral-900 placeholder:text-neutral-400 focus:border-amber-500 focus:ring-amber-400',
-    sendBtn: 'bg-amber-600 hover:bg-amber-700 text-white',
-    modeActive: 'bg-neutral-900 text-white',
-    modeInactive: 'text-neutral-500 hover:text-neutral-800 hover:bg-amber-100',
-  },
-  dark: darkBase({
-    userBubble: 'bg-amber-500 text-white',
-    sendBtn: 'bg-amber-500 hover:bg-amber-600 text-white',
-    modeActive: 'bg-neutral-100 text-neutral-900',
-    textareaFocus: 'focus:border-amber-400 focus:ring-amber-400',
-  }),
-};
-
 export const THEMES: Record<ChatMode, ModeTheme> = {
   academic,
   flirt,
   roast,
-  story,
 };

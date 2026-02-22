@@ -192,7 +192,7 @@ export default function Home() {
   const desktopParallaxY = [leftCardY, centerCardY, rightCardY] as const;
 
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-screen overflow-x-hidden">
       <div
         aria-hidden="true"
         className="to-candy-purple-dark pointer-events-none fixed inset-0 z-0 overflow-hidden bg-white bg-linear-60 dark:from-black"
@@ -429,11 +429,9 @@ export default function Home() {
               simultaneously.
             </p>
             <p className="mt-4 max-w-3xl text-base font-medium text-slate-700 sm:text-lg">
-              This project explores what happens when a swarm of AI models
-              interacts in real time — not just with the user, but with each
-              other. Instead of a single polished response, you witness debate,
-              derailment, ego clashes, flirt mode toggles, feedback loops, and
-              unexpected alliances.
+              This project explores what happens when multiple AI models
+              interact in real time.Instead of a single polished response, you
+              witness debate, love, derailment, and ego clashes.
             </p>
           </motion.div>
           <motion.div
