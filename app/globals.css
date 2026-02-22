@@ -276,3 +276,42 @@
   animation-timing-function: ease-in-out, ease-in-out, ease-in-out;
   animation-iteration-count: infinite;
 }
+
+/* ── Chat window scrollbar ──────────────────────────────────────────────── */
+.chat-window-scrollbar {
+  --chat-scrollbar-rgb: 192, 132, 252;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--chat-scrollbar-rgb), 0.5)
+    rgba(var(--chat-scrollbar-rgb), 0.5);
+}
+
+.chat-window-scrollbar[data-mode='flirt'] {
+  --chat-scrollbar-rgb: 255, 107, 157;
+}
+
+.chat-window-scrollbar[data-mode='academic'] {
+  --chat-scrollbar-rgb: 134, 239, 172;
+}
+
+.chat-window-scrollbar[data-mode='roast'] {
+  --chat-scrollbar-rgb: 192, 132, 252;
+}
+
+.chat-window-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.chat-window-scrollbar::-webkit-scrollbar-track {
+  background: rgba(var(--chat-scrollbar-rgb), 0.5);
+  border-radius: 9999px;
+}
+
+.chat-window-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  border: 1px solid rgba(var(--chat-scrollbar-rgb), 0.5);
+  background: rgba(var(--chat-scrollbar-rgb), 0.5);
+}
+
+.chat-window-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--chat-scrollbar-rgb), 0.5);
+}

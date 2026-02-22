@@ -46,7 +46,7 @@ type Persona = {
 const AI_PERSONAS: Persona[] = [
   {
     id: 'chatgpt',
-    name: 'ChatGPT',
+    name: 'GPT-5 nano',
     role: 'The Intellectual',
     ai: 'OpenAI',
     color: '#10a37f',
@@ -61,7 +61,7 @@ const AI_PERSONAS: Persona[] = [
   },
   {
     id: 'gemini',
-    name: 'Gemini',
+    name: 'Gemma 2',
     role: 'The Speedster',
     ai: 'Google',
     color: '#4285f4',
@@ -76,7 +76,7 @@ const AI_PERSONAS: Persona[] = [
   },
   {
     id: 'ollama',
-    name: 'Ollama',
+    name: 'LLaMA 3.3',
     role: 'The Cool One',
     ai: 'Meta Llama 3',
     color: '#f97316',
@@ -455,7 +455,7 @@ export default function Home() {
           </motion.div>
         </section>
         <footer className="mx-auto max-w-7xl px-6 pb-10 lg:px-8">
-          <div className="rounded-2xl border border-white/20 bg-black/20 px-4 py-4 text-center text-xs font-medium tracking-wide text-white/75 backdrop-blur-sm sm:text-sm">
+          <div className="rounded-2xl px-4 py-4 text-center text-xs font-medium tracking-wide text-white/75 backdrop-blur-sm sm:text-sm">
             &copy; {currentYear} Model Mayhem. All rights reserved.
           </div>
         </footer>

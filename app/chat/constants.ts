@@ -17,7 +17,7 @@ const envMaxDelay = parsePositiveInt(
   DEFAULT_DEBATE_MAX_WAIT_MS
 );
 
-export const CHAT_MODES = ['roast', 'flirt', 'academic'] as const;
+export const CHAT_MODES = ['Roast', 'Flirt', 'Academic'] as const;
 export const DEBATE_MIN_WAIT_MS = Math.min(envMinDelay, envMaxDelay);
 export const DEBATE_MAX_WAIT_MS = Math.max(envMinDelay, envMaxDelay);
 export const DEBATE_MAX_TURNS = parsePositiveInt(
